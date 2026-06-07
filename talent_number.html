@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>才能数 | あなたの才能を数字で知る</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;700;900&family=Cinzel+Decorative:wght@400;700&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fdf6ee;
+  --bg2: #fff9f3;
+  --pink: #e8638a;
+  --pink-light: #f5a3bb;
+  --pink-pale: #fde8ef;
+  --gold: #c9953a;
+  --gold-light: #e8b85a;
+  --navy: #1a1040;
+  --text: #2a1a2e;
+  --text2: #6b4f5a;
+  --white: #ffffff;
+  --shadow: rgba(232,99,138,0.15);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== BG DECORATION ===== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(232,99,138,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 90%, rgba(201,149,58,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(253,232,239,0.3) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sparkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  font-size: 1.2rem;
+  opacity: 0.15;
+  animation: floatSpark var(--dur,8s) ease-in-out infinite;
+  animation-delay: var(--delay,0s);
+}
+@keyframes floatSpark {
+  0%,100% { transform: translateY(0) rotate(0deg); opacity:0.1; }
+  50% { transform: translateY(-20px) rotate(180deg); opacity:0.25; }
+}
+
+/* ===== WRAPPER ===== */
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2rem 1.2rem 5rem;
+}
+
+/* ===== HEADER ===== */
+.page-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding: 2rem 1rem;
+}
+.header-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 0.35rem 1.2rem;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 15px rgba(201,149,58,0.3);
+}
+.page-title {
+  font-family: 'Zen Old Mincho', serif;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+.page-sub {
+  font-size: 0.85rem;
+  color: var(--text2);
+  letter-spacing: 0.1em;
+}
+
+/* ===== HOW TO CARD ===== */
+.howto-card {
+  background: var(--white);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 16px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.8rem;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+.howto-title {
+  font-size: 0.8rem;
+  color: var(--pink);
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.howto-body {
+  font-size: 0.82rem;
+  color: var(--text2);
+  line-height: 1.9;
+}
+.howto-example {
+  background: var(--pink-pale);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  margin-top: 0.7rem;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+.howto-example strong { color: var(--pink); }
+.calc-visual {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.calc-box {
+  background: white;
+  border: 1px solid var(--pink-light);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  color: var(--pink);
+}
+.calc-result {
+  background: linear-gradient(135deg, var(--pink), var(--gold));
+  color: white;
+  border-radius: 6px;
+  padding: 0.2rem 0.7rem;
+}
+.master-note {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ===== INPUT CARD ===== */
+.input-card {
+  background: var(--white);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 40px var(--shadow);
+  text-align: center;
+}
+.input-card-title {
+  font-family: 'Zen Old Mincho', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.1em;
+}
+.select-row {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.select-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+.select-label {
+  font-size: 0.72rem;
+  color: var(--pink);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+select {
+  background: var(--bg);
+  border: 1.5px solid var(--pink-light);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.95rem;
+  padding: 0.6rem 2rem 0.6rem 0.9rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23e8638a' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+select:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(232,99,138,0.12);
+}
+select option { background: white; }
+
+.btn-calc {
+  background: linear-gradient(135deg, var(--pink) 0%, #d4407a 50%, var(--pink) 100%);
+  background-size: 200% 100%;
+  border: none;
+  border-radius: 50px;
+  color: white;
+  cursor: pointer;
+  font-family: 'Zen Old Mincho', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 0.9rem 3rem;
+  transition: all 0.4s;
+  box-shadow: 0 6px 25px rgba(232,99,138,0.4);
+}
+.btn-calc:hover {
+  background-position: 100% 0;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(232,99,138,0.5);
+}
+.err-msg { color: var(--pink); font-size: 0.82rem; margin-top: 0.5rem; display:none; }
+
+/* ===== PROCESS DISPLAY ===== */
+.process-card {
+  display: none;
+  background: var(--pink-pale);
+  border: 1px solid var(--pink-light);
+  border-radius: 14px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  animation: fadeUp 0.5s ease;
+}
+.process-title { font-size: 0.78rem; color: var(--pink); font-weight:700; margin-bottom:0.5rem; letter-spacing:0.1em; }
+.process-steps { font-size: 0.88rem; color: var(--text); font-weight:700; line-height:2; }
+.process-steps span { color: var(--pink); }
+
+/* ===== RESULT ===== */
+.result-card {
+  display: none;
+  animation: fadeUp 0.6s ease;
+}
+@keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+
+.result-number-hero {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  background: linear-gradient(135deg, var(--white) 0%, var(--pink-pale) 100%);
+  border: 2px solid var(--pink-light);
+  border-radius: 24px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 40px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.result-number-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(ellipse at center, rgba(232,99,138,0.06) 0%, transparent 60%);
+  animation: rotateBg 15s linear infinite;
+}
+@keyframes rotateBg { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.result-label {
+  font-size: 0.8rem;
+  color: var(--text2);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+.result-emoji { font-size: 3rem; margin-bottom: 0.3rem; position:relative; animation: bounce 2s ease-in-out infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+
+.result-num {
+  font-family: 'Cinzel Decorative', cursive;
+  font-size: clamp(4rem, 15vw, 6rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  position: relative;
+}
+.master-crown {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 0.25rem 0.8rem;
+  border-radius: 20px;
+  margin-top: 0.5rem;
+  position: relative;
+}
+.result-keyword {
+  font-family: 'Zen Old Mincho', serif;
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 0.8rem;
+  position: relative;
+}
+
+/* ===== AFFIRMATION BOX ===== */
+.affirmation-box {
+  background: linear-gradient(135deg, var(--pink) 0%, #c03070 100%);
+  border-radius: 18px;
+  padding: 1.8rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(232,99,138,0.35);
+  position: relative;
+  overflow: hidden;
+}
+.affirmation-box::before {
+  content: '✦';
+  position: absolute;
+  font-size: 8rem;
+  color: rgba(255,255,255,0.05);
+  top: -2rem; right: -1rem;
+}
+.affirmation-title {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.8);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.8rem;
+  position: relative;
+}
+.affirmation-lines {
+  position: relative;
+}
+.affirmation-line {
+  font-family: 'Zen Old Mincho', serif;
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  color: white;
+  font-weight: 700;
+  line-height: 2.2;
+  letter-spacing: 0.05em;
+}
+
+/* ===== INFO GRID ===== */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media(max-width:500px){ .info-grid { grid-template-columns: 1fr; } }
+
+.info-cell {
+  background: var(--white);
+  border: 1.5px solid var(--pink-pale);
+  border-radius: 14px;
+  padding: 1.1rem;
+  box-shadow: 0 4px 15px var(--shadow);
+}
+.info-cell-title {
+  font-size: 0.75rem;
+  color: var(--pink);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.info-cell-body {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.9;
+}
+
+/* ===== 2026 MESSAGE ===== */
+.year-card {
+  background: linear-gradient(135deg, var(--navy) 0%, #2d1a50 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(26,16,64,0.25);
+}
+.year-card-title {
+  font-size: 0.78rem;
+  color: var(--gold-light);
+  letter-spacing: 0.2em;
+  margin-bottom: 0.6rem;
+}
+.year-card-body {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 2;
+}
+.year-card-highlight {
+  color: var(--gold-light);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* ===== CATCH DECLARATION ===== */
+.catch-card {
+  background: var(--white);
+  border: 2px dashed var(--pink-light);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.catch-title {
+  font-size: 0.78rem;
+  color: var(--gold);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  margin-bottom: 1rem;
+}
+.catch-line {
+  font-size: 0.9rem;
+  color: var(--text2);
+  line-height: 2.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.catch-blank {
+  border-bottom: 1.5px solid var(--pink);
+  min-width: 180px;
+  display: inline-block;
+  color: var(--pink);
+  font-weight: 700;
+}
+
+/* ===== FOOTER ===== */
+.page-footer {
+  text-align: center;
+  padding: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text2);
+  letter-spacing: 0.1em;
+}
+
+.divider {
+  text-align: center;
+  color: var(--pink-light);
+  font-size: 0.8rem;
+  letter-spacing: 0.3em;
+  margin: 1.2rem 0;
+}
+</style>
+</head>
+<body>
+
+<!-- Floating sparkles -->
+<script>
+const sparkles = ['✦','✧','⭐','💫','✨','🌸','💕'];
+for(let i=0;i<18;i++){
+  const el = document.createElement('div');
+  el.className = 'sparkle';
+  el.textContent = sparkles[Math.floor(Math.random()*sparkles.length)];
+  el.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${6+Math.random()*8}s;--delay:${Math.random()*5}s;font-size:${0.8+Math.random()*1}rem;`;
+  document.body.appendChild(el);
+}
+</script>
+
+<div class="wrapper">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-badge">✦ 巡る三種の神器 ✦</div>
+    <div class="page-title">あなたの才能数を<br>知りましょう</div>
+    <div class="page-sub">〜 あなたの才能を活かし、人生とお金が巡る言葉の力 〜</div>
+  </div>
+
+  <!-- How to -->
+  <div class="howto-card">
+    <div class="howto-title">✦ 才能数の出し方</div>
+    <div class="howto-body">
+      生年月日の数字をすべて足して、1桁またはマスターナンバー（11・22・33）になるまで足します。
+      <div class="howto-example">
+        <strong>例）1985年7月24日生まれの場合</strong>
+        <div class="calc-visual">
+          <span class="calc-box">1</span>＋
+          <span class="calc-box">9</span>＋
+          <span class="calc-box">8</span>＋
+          <span class="calc-box">5</span>＋
+          <span class="calc-box">7</span>＋
+          <span class="calc-box">2</span>＋
+          <span class="calc-box">4</span>
+          ＝36　→　3＋6＝
+          <span class="calc-result">9</span>
+        </div>
+        <div class="master-note">⭐ 途中で11・22・33になったらそこで完成！（マスターナンバー）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="input-card">
+    <div class="input-card-title">🌸 生年月日を選んでください</div>
+    <div class="select-row">
+      <div class="select-group">
+        <span class="select-label">生年（西暦）</span>
+        <select id="selYear">
+          <option value="">年を選択</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <span class="select-label">月</span>
+        <select id="selMonth">
+          <option value="">月</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <span class="select-label">日</span>
+        <select id="selDay">
+          <option value="">日</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-calc" onclick="calcTalent()">✦ 才能数を調べる ✦</button>
+    <div class="err-msg" id="errMsg">生年月日を正しく選択してください</div>
+  </div>
+
+  <!-- Process -->
+  <div class="process-card" id="processCard">
+    <div class="process-title">✦ 計算の流れ</div>
+    <div class="process-steps" id="processSteps"></div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-card" id="resultCard"></div>
+
+</div>
+
+<script>
+/* ===== BUILD SELECTS ===== */
+const selYear = document.getElementById('selYear');
+for(let y=1930;y<=2010;y++){
+  const o=document.createElement('option');
+  o.value=y; o.textContent=y+'年';
+  selYear.appendChild(o);
+}
+const selMonth = document.getElementById('selMonth');
+for(let m=1;m<=12;m++){
+  const o=document.createElement('option');
+  o.value=m; o.textContent=m+'月';
+  selMonth.appendChild(o);
+}
+const selDay = document.getElementById('selDay');
+for(let d=1;d<=31;d++){
+  const o=document.createElement('option');
+  o.value=d; o.textContent=d+'日';
+  selDay.appendChild(o);
+}
+
+/* ===== TALENT DATA ===== */
+const TALENTS = {
+  1: {
+    emoji:'🌅', keyword:'自ら道を切り拓くリーダー',
+    affirmations:[
+      '私は自ら道を切り拓きます。',
+      '行動するたびに新しいチャンスが巡ってきます。',
+      '私は勇気を持って最初の一歩を踏み出します。'
+    ],
+    traits:'独立心が強く、先駆者としての才能を持ちます。人より先に行動し、新しい分野を開拓することが得意です。',
+    money:'行動すればするほど、お金のチャンスが広がります。自分でビジネスを起こすことに向いています。',
+    love:'リードする恋愛が得意。相手を引っ張っていく強さが魅力です。',
+    advice:'行動が最大の才能。迷ったら動くこと。',
+    color:'赤・オレンジ', item:'太陽・炎のモチーフ',
+    year2026:'2026年はあなたの行動力が最大限に開花する年。新しい挑戦は今すぐ始めて！'
+  },
+  2: {
+    emoji:'💕', keyword:'人との縁を大切にする調和の人',
+    affirmations:[
+      '私は人との御縁を大切にします。',
+      '調和と信頼が豊かさを巡らせます。',
+      '私は安心して人と繋がります。'
+    ],
+    traits:'繊細な感受性と共感力を持つ、縁の架け橋。人の心に寄り添うことで、大きな力を生みます。',
+    money:'人間関係からお金が生まれます。パートナーシップや協力関係を大切に。',
+    love:'相手の気持ちに寄り添う深い愛情の持ち主。二人の時間を大切にする恋愛が吉。',
+    advice:'NO と言える自分を育てること。与えすぎに注意。',
+    color:'ピンク・白', item:'ペア・2つ並んだもの',
+    year2026:'2026年は人とのつながりが豊かさを運んでくる年。信頼できる縁を育てて。'
+  },
+  3: {
+    emoji:'🎤', keyword:'自分らしく表現する喜びの発信者',
+    affirmations:[
+      '私は自分らしく表現します。',
+      '私の言葉と笑顔が人を癒やします。',
+      '楽しむほど豊かさが巡ります。'
+    ],
+    traits:'表現力・コミュニケーション力が抜群。楽しさや喜びを周りに伝染させる才能があります。',
+    money:'楽しむことがそのままお金になります。好きなことを仕事にするのが最善。',
+    love:'明るく楽しい恋愛が得意。笑顔と会話で相手を魅了します。',
+    advice:'ネガティブな言葉を手放して。言葉が現実を作ります。',
+    color:'黄色・オレンジ', item:'マイク・楽器',
+    year2026:'2026年は発信が豊かさを生む年。SNS・話すこと・書くことで運が開く。'
+  },
+  4: {
+    emoji:'🌱', keyword:'コツコツ積み重ねる着実な実現者',
+    affirmations:[
+      '私はコツコツ積み重ねる力を持っています。',
+      '小さな行動が大きな成果を生み出します。',
+      '私は着実に未来を創ります。'
+    ],
+    traits:'忍耐力・計画性・実直さが才能。地道な努力を続けることで、誰よりも大きな成果を出します。',
+    money:'継続とシステム化がお金を増やします。安定した収入源を複数持つことが吉。',
+    love:'誠実で安定した恋愛。長く続く深い関係を築くことが得意です。',
+    advice:'完璧主義になりすぎないように。70%でも前進することが大切。',
+    color:'緑・茶色', item:'木・大地・種',
+    year2026:'2026年は積み重ねてきたものが形になる年。継続が最大の才能です。'
+  },
+  5: {
+    emoji:'🦋', keyword:'変化を楽しむ自由な冒険者',
+    affirmations:[
+      '私は変化を楽しみます。',
+      '新しい挑戦が人生を豊かにします。',
+      '私は自由に未来を選びます。'
+    ],
+    traits:'変化への適応力・自由な発想・好奇心が才能。新しいことへの挑戦が運を開きます。',
+    money:'変化とスピードがお金を生みます。同じことを続けるより、新しい流れに乗ることが吉。',
+    love:'刺激的でワクワクする恋愛が好み。お互いの自由を尊重する関係が長続きの秘訣。',
+    advice:'一つのことに集中する時間も作って。散漫になりすぎに注意。',
+    color:'水色・ターコイズ', item:'蝶・羽・旅',
+    year2026:'2026年は新しい扉が次々と開く年。チャンスは全部つかんでOK！'
+  },
+  6: {
+    emoji:'💝', keyword:'愛と感謝を循環させる癒やしの人',
+    affirmations:[
+      '私は愛と感謝を循環させます。',
+      '与えるほど豊かさが巡ります。',
+      '私は人を幸せにする存在です。'
+    ],
+    traits:'愛情深さ・責任感・美的センスが才能。人を愛し、ケアする能力が豊かさをもたらします。',
+    money:'愛情とサービス精神からお金が生まれます。人の役に立つビジネスが向いています。',
+    love:'深く愛し、献身的に尽くす恋愛スタイル。家庭的な幸せを大切にします。',
+    advice:'自分を後回しにしすぎないで。自分への愛も忘れずに。',
+    color:'ローズ・ゴールド', item:'ハート・花・家',
+    year2026:'2026年は愛情が豊かさに変わる年。与えることを恐れないで。'
+  },
+  7: {
+    emoji:'🌙', keyword:'内なる声を信じる真実の探求者',
+    affirmations:[
+      '私は自分を信じます。',
+      '内なる声が最高の答えを教えてくれます。',
+      '私は直感を受け取り行動します。'
+    ],
+    traits:'深い洞察力・分析力・直感力が才能。表面ではなく本質を見抜く力があります。',
+    money:'専門性と知識がお金を生みます。深く学び、専門家になることが豊かさへの道。',
+    love:'深く理解し合える関係を求めます。表面的な恋愛より、魂レベルでのつながりを大切に。',
+    advice:'考えすぎて行動が遅れることがあります。直感を信じて動くことも大切。',
+    color:'紺・紫', item:'月・星・水晶',
+    year2026:'2026年はあなたの直感が冴え渡る年。内なる声を信じて動いて。'
+  },
+  8: {
+    emoji:'👑', keyword:'豊かさを受け取る力を持つ成功者',
+    affirmations:[
+      '私は豊かさを受け取る価値があります。',
+      '私の行動は大きな成果に繋がります。',
+      '私は成功を楽しみながら受け取ります。'
+    ],
+    traits:'実行力・リーダーシップ・ビジネスセンスが才能。大きな成功と豊かさを引き寄せる力があります。',
+    money:'あなたには大きなお金を動かす才能があります。ビジネス・投資・経営に向いています。',
+    love:'強くて頼れるパートナーを求めます。対等な関係の中に深い愛情があります。',
+    advice:'支配的にならないように。周りの意見にも耳を傾けて。',
+    color:'ゴールド・黒', item:'王冠・ダイヤモンド',
+    year2026:'2026年はあなたの成功が加速する年。大きな決断を恐れないで。'
+  },
+  9: {
+    emoji:'🕊️', keyword:'手放しながら前進する魂の完成者',
+    affirmations:[
+      '私は手放しながら前進します。',
+      'すべての経験が未来の財産になります。',
+      '私は軽やかに次のステージへ進みます。'
+    ],
+    traits:'普遍的な愛・思いやり・奉仕の精神が才能。人類全体への愛を持ち、世界に貢献します。',
+    money:'与えることと手放しがお金を循環させます。ギブの精神が豊かさを呼び込みます。',
+    love:'深い愛情と許容力を持ちます。相手の全てを受け入れる大きな愛の持ち主。',
+    advice:'過去に執着しすぎないで。手放すことが次のステージへの鍵です。',
+    color:'白・金・虹色', item:'鳩・円・宇宙',
+    year2026:'2026年は執着を手放すほど豊かさが入ってくる年。軽やかに！'
+  },
+  11: {
+    emoji:'💡', keyword:'ひらめきを世界に届ける光の使者',
+    affirmations:[
+      '私はひらめきを信頼します。',
+      '私の気づきは人の希望になります。',
+      '私は光を先を灯ける存在です。'
+    ],
+    traits:'高次の直感・インスピレーション・精神的リーダーシップが才能。時代の光となる使命を持ちます。',
+    money:'インスピレーションと発信がお金を生みます。精神性の高い活動が豊かさに直結します。',
+    love:'深い魂のつながりを求めます。スピリチュアルな縁で結ばれるパートナーシップが吉。',
+    advice:'感受性が強く疲れやすいので、自分を守ることも大切に。',
+    color:'白・銀・光', item:'稲妻・光の柱',
+    year2026:'2026年はあなたの光が最も必要とされる年。発信して世界を照らして。',
+    isMaster: true
+  },
+  22: {
+    emoji:'🏔️', keyword:'大きな夢を現実にする建設者',
+    affirmations:[
+      '私は大きな夢を現実にします。',
+      '私の活動は多くの人に貢献します。',
+      '私は理想を形にする力を持っています。'
+    ],
+    traits:'大規模なビジョンと実現力が才能。世界を変えるような大きなプロジェクトを実現する力があります。',
+    money:'大きなビジョンを持つほどお金も大きく動きます。社会貢献とビジネスの融合が吉。',
+    love:'深くて安定した関係を望みます。共に夢を実現するパートナーが最高の縁。',
+    advice:'完璧な計画より、まず一歩動くことが大切。大きすぎる夢に怖じ気づかないで。',
+    color:'山吹・深緑', item:'山・ピラミッド・建物',
+    year2026:'2026年はあなたの大きなビジョンが動き出す年。世界規模の夢を描いて。',
+    isMaster: true
+  },
+  33: {
+    emoji:'🪷', keyword:'愛そのものとして世界を幸せにする存在',
+    affirmations:[
+      '私は愛そのものです。',
+      '私の存在が周りを幸せにします。',
+      '私は無限の可能性を受け取り広げます。'
+    ],
+    traits:'無条件の愛・癒し・精神的な高みが才能。その存在自体が人々を癒し、愛で包みます。',
+    money:'愛と癒しを提供することで豊かさが循環します。ヒーリング・教育・芸術分野に向いています。',
+    love:'深く純粋な愛を与えます。魂レベルで惹かれ合う神聖な縁を持ちます。',
+    advice:'自分の感情の波を大切に。疲れを感じたらすぐに休んで。',
+    color:'桃色・白・金', item:'蓮の花・光',
+    year2026:'2026年はあなたの愛が最大の力になる年。存在するだけで世界に貢献しています。',
+    isMaster: true
+  }
+};
+
+/* ===== CALCULATION ===== */
+function calcTalentNumber(y, m, d) {
+  // All digits of year+month+day
+  const str = String(y) + String(m) + String(d);
+  const digits = str.split('').map(Number);
+  let sum = digits.reduce((a,b)=>a+b, 0);
+
+  const steps = [`${digits.join(' ＋ ')} ＝ ${sum}`];
+
+  // Reduce until single digit or master number
+  while(sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
+    const digs = String(sum).split('').map(Number);
+    const newSum = digs.reduce((a,b)=>a+b,0);
+    steps.push(`${digs.join(' ＋ ')} ＝ ${newSum}`);
+    sum = newSum;
+  }
+  return { number: sum, steps };
+}
+
+function calcTalent() {
+  const y = parseInt(document.getElementById('selYear').value);
+  const m = parseInt(document.getElementById('selMonth').value);
+  const d = parseInt(document.getElementById('selDay').value);
+  const err = document.getElementById('errMsg');
+  err.style.display = 'none';
+
+  if(isNaN(y)||isNaN(m)||isNaN(d)){
+    err.style.display='block'; return;
+  }
+
+  const { number, steps } = calcTalentNumber(y, m, d);
+  const data = TALENTS[number];
+
+  // Show process
+  const pc = document.getElementById('processCard');
+  const ps = document.getElementById('processSteps');
+  pc.style.display = 'block';
+  ps.innerHTML = steps.map((s,i)=>
+    `<div>${i===0?`${y}年${m}月${d}日 → `:''}${i===steps.length-1?`<span>${s}</span>`:s}</div>`
+  ).join('');
+
+  // Build result
+  const isMaster = data.isMaster;
+  const affHtml = data.affirmations.map(a=>`<div class="affirmation-line">${a}</div>`).join('');
+
+  const rc = document.getElementById('resultCard');
+  rc.style.display = 'block';
+  rc.innerHTML = `
+    <div class="result-number-hero">
+      <div class="result-label">✦ あなたの才能数 ✦</div>
+      <div class="result-emoji">${data.emoji}</div>
+      <div class="result-num">${number}</div>
+      ${isMaster ? `<div class="master-crown">⭐ マスターナンバー ${number}</div>` : ''}
+      <div class="result-keyword">${data.keyword}</div>
+    </div>
+
+    <div class="affirmation-box">
+      <div class="affirmation-title">✦ あなたのアファメーション ✦</div>
+      <div class="affirmation-lines">${affHtml}</div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-cell">
+        <div class="info-cell-title">🌟 才能・特徴</div>
+        <div class="info-cell-body">${data.traits}</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-title">💰 お金との関係</div>
+        <div class="info-cell-body">${data.money}</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-title">💕 恋愛・人間関係</div>
+        <div class="info-cell-body">${data.love}</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-cell-title">✨ ラッキーカラー・アイテム</div>
+        <div class="info-cell-body">🎨 ${data.color}<br>🔮 ${data.item}</div>
+      </div>
+    </div>
+
+    <div class="year-card">
+      <div class="year-card-title">✦ 2026年 才能数${number} へのメッセージ ✦</div>
+      <div class="year-card-body">${data.year2026}</div>
+      <span class="year-card-highlight">2026年は"発展の年"。あなたの才能を活かして！</span>
+    </div>
+
+    <div class="catch-card">
+      <div class="catch-title">✦ キャッチ宣言 ✦</div>
+      <div class="catch-line">
+        私は2026年、<span class="catch-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>をキャッチします。
+      </div>
+      <div class="catch-line" style="margin-top:0.3rem">
+        そして、<span class="catch-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>を行動します。
+      </div>
+    </div>
+
+    <div class="page-footer">
+      あなたの未来は、今日の言葉から始まります ✦
+    </div>
+  `;
+
+  rc.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+</script>
+</body>
+</html>
