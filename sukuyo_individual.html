@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>宿曜相性鑑定</title>
+<title>宿曜個人鑑定</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;700;900&family=Cinzel+Decorative:wght@400;700&family=Zen+Old+Mincho:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -121,6 +121,7 @@ body {
   margin-bottom: 1.5rem;
 }
 @media(max-width:520px) { .person-row { grid-template-columns: 1fr; } }
+.person-row.single-person { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
 
 .person-block {
   background: rgba(0,0,0,0.2);
@@ -216,6 +217,7 @@ select option { background: #1a1640; }
   margin-bottom: 1.5rem;
 }
 @media(max-width:520px) { .persons-grid { grid-template-columns: 1fr; } }
+.persons-grid.single { grid-template-columns: 1fr; }
 
 .person-result-card {
   background: linear-gradient(145deg, rgba(26,22,64,0.9), rgba(12,10,20,0.95));
@@ -482,6 +484,7 @@ select option { background: #1a1640; }
   gap: 0.8rem;
   margin-top: 1rem;
 }
+.today-compat-row.single { grid-template-columns: 1fr; }
 .today-compat-cell {
   background: rgba(0,0,0,0.3);
   border: 1px solid var(--border);
@@ -681,18 +684,17 @@ select option { background: #1a1640; }
   <!-- Hero -->
   <div class="hero">
     <div class="hero-moon">🌙</div>
-    <div class="hero-title">宿曜相性鑑定</div>
-    <div class="hero-sub">Sukuyo Compatibility</div>
+    <div class="hero-title">宿曜個人鑑定</div>
+    <div class="hero-sub">Sukuyo Individual Reading</div>
   </div>
 
   <div class="gold-line">✦ 生年月日を入力 ✦</div>
 
   <!-- Input -->
   <div class="input-card">
-    <div class="input-section-title">✦ お二人の生年月日を選んでください</div>
-    <div class="person-row">
+    <div class="input-section-title">✦ 生年月日を選んでください</div>
+    <div class="person-row single-person">
       <div class="person-block">
-        <div class="person-label">🌙 あなた</div>
         <div class="select-group">
           <span class="select-label">お名前（任意）</span>
           <input type="text" id="name1" class="name-input" placeholder="例：山本 剛">
@@ -710,27 +712,8 @@ select option { background: #1a1640; }
           <select id="d1"></select>
         </div>
       </div>
-      <div class="person-block">
-        <div class="person-label">⭐ お相手</div>
-        <div class="select-group">
-          <span class="select-label">お名前（任意）</span>
-          <input type="text" id="name2" class="name-input" placeholder="例：田中 花子">
-        </div>
-        <div class="select-group">
-          <span class="select-label">生年（西暦）</span>
-          <select id="y2"></select>
-        </div>
-        <div class="select-group">
-          <span class="select-label">月</span>
-          <select id="m2"></select>
-        </div>
-        <div class="select-group">
-          <span class="select-label">日</span>
-          <select id="d2"></select>
-        </div>
-      </div>
     </div>
-    <button class="btn-calc" onclick="calc()">✦ 宿曜で相性を鑑定する ✦</button>
+    <button class="btn-calc" onclick="calc()">✦ 宿曜で鑑定する ✦</button>
     <div class="err-msg" id="err">生年月日を正しく選択してください</div>
   </div>
 
@@ -738,24 +721,15 @@ select option { background: #1a1640; }
   <div id="result">
     <div class="gold-line">✦ 鑑定結果 ✦</div>
 
-    <!-- Two persons -->
-    <div class="persons-grid" id="persons-grid"></div>
-
-    <!-- Compatibility -->
-    <div class="compat-hero" id="compat-hero"></div>
+    <!-- Person card -->
+    <div class="persons-grid single" id="persons-grid"></div>
 
     <!-- Today & Calendar -->
     <div id="today-section"></div>
 
-    <!-- Meaning table -->
-    <div class="compat-meaning-card">
-      <div class="meaning-title">✦ 相性の意味 一覧 ✦</div>
-      <table class="meaning-table" id="meaning-table"></table>
-    </div>
-
     <div class="note-card">
-      ※ 宿曜術は古代インド起源の天文占術で、平安時代に日本へ伝わりました。27の「宿（しゅく）」で人の運命と相性を読み解きます。<br>
-      ※ 相性の「命・業・胎・栄・親・友・衰・安・壊・危・成」の11種は、あなたから見た相手、相手から見たあなた、それぞれ異なります。<br>
+      ※ 宿曜術は古代インド起源の天文占術で、平安時代に日本へ伝わりました。27の「宿（しゅく）」で人の運命を読み解きます。<br>
+      ※ 「今日の運勢」は、本命宿と日宿（今日の月が位置する宿）の関係から導いています。<br>
       ※ 本ツールの計算は、旧暦変換と太陽黄経をもとにした宿曜算出法（複数の実例で検証済み）による参考計算です。正確な鑑定は専門家にご確認ください。
     </div>
 
@@ -765,7 +739,7 @@ select option { background: #1a1640; }
     </div>
 
     <div class="print-footer">
-      ✦ La'a Kea MOON ／ 宿曜相性鑑定 ✦<br>
+      ✦ La'a Kea MOON ／ 宿曜個人鑑定 ✦<br>
       <span id="print-date"></span>
     </div>
   </div>
@@ -825,7 +799,6 @@ function buildSelects(yId, mId, dId) {
   }
 }
 buildSelects('y1','m1','d1');
-buildSelects('y2','m2','d2');
 
 /* ===== 27 SHUKU DATA ===== */
 const SHUKU = [
@@ -1081,69 +1054,21 @@ function calc() {
   const y1=parseInt(document.getElementById('y1').value);
   const m1=parseInt(document.getElementById('m1').value);
   const d1=parseInt(document.getElementById('d1').value);
-  const y2=parseInt(document.getElementById('y2').value);
-  const m2=parseInt(document.getElementById('m2').value);
-  const d2=parseInt(document.getElementById('d2').value);
   const err = document.getElementById('err');
   err.style.display='none';
 
-  if(isNaN(y1)||isNaN(m1)||isNaN(d1)||isNaN(y2)||isNaN(m2)||isNaN(d2)){
+  if(isNaN(y1)||isNaN(m1)||isNaN(d1)){
     err.style.display='block'; return;
   }
 
   const name1 = document.getElementById('name1').value.trim();
-  const name2 = document.getElementById('name2').value.trim();
   const label1 = '🌙 あなた' + (name1 ? `（${name1}）` : '');
-  const label2 = '⭐ お相手' + (name2 ? `（${name2}）` : '');
 
   const idx1 = getShuku(y1,m1,d1);
-  const idx2 = getShuku(y2,m2,d2);
   const s1 = SHUKU[idx1];
-  const s2 = SHUKU[idx2];
-  const { type1, type2 } = getCompat(idx1, idx2);
 
-  const mark1 = TYPE_MARK[type1], mark2 = TYPE_MARK[type2];
-
-  // Render persons
-  document.getElementById('persons-grid').innerHTML = `
-    ${renderPersonCard(s1, idx1, label1, y1, m1, d1)}
-    ${renderPersonCard(s2, idx2, label2, y2, m2, d2)}
-  `;
-
-  // Render compat hero
-  document.getElementById('compat-hero').innerHTML = `
-    <div class="compat-label">✦ お二人の相性 ✦</div>
-    <div class="compat-symbols">
-      <span class="compat-shuku">${s1.name}</span>
-      <span class="compat-arrow">×</span>
-      <span class="compat-shuku">${s2.name}</span>
-    </div>
-    <div class="compat-main">
-      <div class="compat-side">
-        <div class="compat-side-label">あなたから見たお相手</div>
-        <div class="compat-side-value">${type1}（${mark1}）</div>
-        <div style="font-size:0.75rem;color:var(--dim);margin-top:0.4rem;line-height:1.7">${TYPE_MEANING[type1]}</div>
-      </div>
-      <div class="compat-side">
-        <div class="compat-side-label">お相手から見たあなた</div>
-        <div class="compat-side-value">${type2}（${mark2}）</div>
-        <div style="font-size:0.75rem;color:var(--dim);margin-top:0.4rem;line-height:1.7">${TYPE_MEANING[type2]}</div>
-      </div>
-    </div>
-    <div class="compat-one-line">お二人の関係を一言で表すと…<br>
-      <span style="font-size:clamp(1rem,3vw,1.2rem);color:var(--gold-l);font-weight:700">${TYPE_ONELINE[type1]}</span>
-    </div>
-  `;
-
-  // Render meaning table（全11種、該当箇所をハイライト）
-  const highlightTypes = [type1, type2];
-  document.getElementById('meaning-table').innerHTML = Object.entries(TYPE_MEANING).map(([k,v]) => {
-    const isHL = highlightTypes.includes(k);
-    return `<tr class="${isHL?'highlight':''}">
-      <td>${k}（${TYPE_MARK[k]}）</td>
-      <td>${v}</td>
-    </tr>`;
-  }).join('');
+  // Render person card
+  document.getElementById('persons-grid').innerHTML = renderPersonCard(s1, idx1, label1, y1, m1, d1);
 
   // Today's shuku
   const todayDate = new Date();
@@ -1151,34 +1076,28 @@ function calc() {
   const todayIdx = getNichiShuku(ty, tm, td2);
   const todayShuku = SHUKU[todayIdx];
   const { type1: tt1 } = getCompat(idx1, todayIdx);
-  const { type1: tt3 } = getCompat(idx2, todayIdx);
 
   document.getElementById('today-section').innerHTML = `
     <div class="today-shuku-card">
       <div class="today-label">✦ 今日（${ty}年${tm}月${td2}日）の日宿 ✦</div>
       <div class="today-shuku-name">${todayShuku.name}（${todayShuku.read}）</div>
       <div style="font-size:0.78rem;color:var(--dim);margin-top:0.2rem">${todayShuku.keywords.join('・')}</div>
-      <div class="today-compat-row">
+      <div class="today-compat-row single">
         <div class="today-compat-cell">
-          <div class="today-compat-label">🌙 あなた × 今日</div>
+          <div class="today-compat-label">🌙 あなたとの関係</div>
           <div class="today-compat-val">${tt1}（${TYPE_MARK[tt1]}）</div>
           <div class="today-compat-kichi">${TODAY_MSG[tt1]}</div>
         </div>
-        <div class="today-compat-cell">
-          <div class="today-compat-label">⭐ お相手 × 今日</div>
-          <div class="today-compat-val">${tt3}（${TYPE_MARK[tt3]}）</div>
-          <div class="today-compat-kichi">${TODAY_MSG[tt3]}</div>
-        </div>
       </div>
     </div>
-    ${buildCalendar(idx1, idx2, ty, tm, td2)}
+    ${buildCalendar(idx1, ty, tm, td2)}
   `;
 
   document.getElementById('result').style.display='block';
   document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function buildCalendar(idx1, idx2, ty, tm, td) {
+function buildCalendar(idx1, ty, tm, td) {
   const rows = [];
   const weekDays = ['日','月','火','水','木','金','土'];
   for (let i = 0; i < 30; i++) {
@@ -1187,22 +1106,20 @@ function buildCalendar(idx1, idx2, ty, tm, td) {
     const nIdx = getNichiShuku(yy, mm, dd);
     const ns = SHUKU[nIdx];
     const { type1: c1 } = getCompat(idx1, nIdx);
-    const { type1: c2 } = getCompat(idx2, nIdx);
-    const mk1 = TYPE_MARK[c1], mk2 = TYPE_MARK[c2];
+    const mk1 = TYPE_MARK[c1];
     const isToday = i === 0;
     rows.push(`<tr class="${isToday?'cal-today':''}">
       <td>${yy}/${String(mm).padStart(2,'0')}/${String(dd).padStart(2,'0')}</td>
       <td>${weekDays[d.getDay()]}</td>
       <td>${ns.name}</td>
       <td class="${getKichiClass(mk1)}">${c1} ${mk1}</td>
-      <td class="${getKichiClass(mk2)}">${c2} ${mk2}</td>
     </tr>`);
   }
   return `<div class="calendar-section">
     <div class="calendar-title">✦ 今後30日間の運勢カレンダー ✦</div>
     <table class="calendar-table">
       <thead><tr>
-        <th>日付</th><th>曜</th><th>日宿</th><th>🌙あなた</th><th>⭐お相手</th>
+        <th>日付</th><th>曜</th><th>日宿</th><th>あなたとの関係</th>
       </tr></thead>
       <tbody>${rows.join('')}</tbody>
     </table>
