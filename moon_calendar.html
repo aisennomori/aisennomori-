@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ハワイアン・ムーン・カレンダー | 愛泉の杜</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#FBF6EC;
+    --card:#FFFFFF;
+    --ink:#3A322A;
+    --ink-soft:#9A8F80;
+    --line:#EAE1D2;
+    --waxing:#4F9D94;
+    --full:#E2A23C;
+    --waning:#8FAE7E;
+    --moon-dark:#2E2A24;
+    --moon-light:#F6CE5B;
+    --font-display:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif;
+    --font-body:'Zen Kaku Gothic New','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+  }
+
+  .page{
+    max-width:480px;
+    margin:0 auto;
+    padding:0 0 40px;
+    min-height:100vh;
+  }
+
+  /* Header */
+  header.app-header{
+    background:linear-gradient(180deg,#3E3A33 0%,#4A4339 100%);
+    color:#F7F1E4;
+    padding:22px 20px 26px;
+    border-radius:0 0 22px 22px;
+  }
+  header.app-header h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1.35rem;
+    letter-spacing:.04em;
+    margin:0 0 2px;
+  }
+  header.app-header .subtitle{
+    font-size:.75rem;
+    color:#CFC4AE;
+    letter-spacing:.08em;
+    margin:0;
+  }
+
+  .today-widget{
+    margin-top:16px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:14px;
+    padding:12px 14px;
+    display:grid;
+    grid-template-columns:48px 1fr;
+    gap:12px;
+    align-items:center;
+  }
+  .today-widget .label{
+    font-size:.68rem;
+    color:#CFC4AE;
+    letter-spacing:.1em;
+    margin-bottom:2px;
+  }
+  .today-widget .name-line{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1rem;
+    color:#FBF6EC;
+  }
+  .today-widget .name-line .kana{
+    font-weight:400;
+    font-size:.78rem;
+    color:#D8CDB8;
+    margin-left:6px;
+  }
+  .today-widget .desc{
+    font-size:.78rem;
+    color:#E4DCC9;
+    margin-top:3px;
+    line-height:1.5;
+  }
+  .today-widget .moon-wrap svg{ display:block; }
+
+  /* Controls */
+  .controls{
+    margin:18px 16px 4px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .controls .field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .controls label{
+    font-size:.7rem;
+    color:var(--ink-soft);
+    letter-spacing:.06em;
+  }
+  .controls select{
+    font-family:var(--font-body);
+    font-size:.95rem;
+    color:var(--ink);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:7px 10px;
+    background:#FCFAF5;
+  }
+  .controls button{
+    margin-left:auto;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:.9rem;
+    color:#FBF6EC;
+    background:var(--ink);
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    cursor:pointer;
+    letter-spacing:.05em;
+  }
+  .controls button:active{ opacity:.85; }
+
+  /* Calendar */
+  .cal-title{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1rem;
+    color:var(--ink);
+    margin:22px 16px 8px;
+    padding-bottom:6px;
+    border-bottom:2px solid var(--line);
+  }
+  .calendar-list{
+    margin:0 16px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+  }
+
+  .day-card{
+    position:relative;
+    display:grid;
+    grid-template-columns:46px 38px 1fr;
+    gap:0 12px;
+    align-items:start;
+    padding:12px 14px 12px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .day-card:last-child{ border-bottom:none; }
+  .day-card::before{
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    background:var(--phase-color);
+  }
+  .day-card.today{ background:#FFF7E2; }
+
+  .date-block{ text-align:center; padding-top:1px; }
+  .date-num{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1.4rem;
+    line-height:1;
+    color:var(--ink);
+  }
+  .date-dow{
+    font-size:.68rem;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .date-dow.sun{ color:#C25450; }
+  .date-dow.sat{ color:#4A6FA5; }
+
+  .moon-wrap{ display:flex; justify-content:center; padding-top:3px; }
+
+  .info-block{ min-width:0; }
+  .info-block .name-line{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:.92rem;
+    color:var(--ink);
+  }
+  .info-block .name-line .num{
+    color:var(--ink-soft);
+    font-weight:400;
+    margin-right:3px;
+  }
+  .info-block .name-line .kana{
+    font-weight:400;
+    font-size:.74rem;
+    color:var(--ink-soft);
+    margin-left:6px;
+  }
+  .info-block .desc{
+    font-size:.78rem;
+    line-height:1.55;
+    margin-top:3px;
+    color:#5A5048;
+  }
+
+  /* Legend */
+  .legend{
+    display:flex;
+    gap:14px;
+    margin:14px 16px 0;
+    font-size:.7rem;
+    color:var(--ink-soft);
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .legend i{
+    display:inline-block; width:10px; height:10px; border-radius:2px;
+  }
+  .legend .i-wax{ background:var(--waxing); }
+  .legend .i-full{ background:var(--full); }
+  .legend .i-wan{ background:var(--waning); }
+
+  /* Print button */
+  .print-section{
+    margin:22px 16px 0;
+  }
+  .print-section button{
+    width:100%;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1rem;
+    letter-spacing:.06em;
+    color:#FBF6EC;
+    background:var(--ink);
+    border:none;
+    border-radius:12px;
+    padding:14px;
+    cursor:pointer;
+  }
+  .print-section button:active{ opacity:.85; }
+  .print-hint{
+    text-align:center;
+    font-size:.7rem;
+    color:var(--ink-soft);
+    margin-top:8px;
+  }
+
+  /* Print styles */
+  @media print{
+    body{ background:#fff; }
+    header.app-header{
+      background:none; color:var(--ink); border-radius:0; padding:0 0 10px;
+    }
+    .today-widget{ display:none; }
+    .controls{ display:none; }
+    .legend{ display:none; }
+    .print-section{ display:none; }
+    .cal-title{ margin:10px 0 6px; }
+    .calendar-list{ border:none; border-radius:0; margin:0; }
+    .page{ max-width:100%; padding:0; }
+    .day-card{ padding:6px 4px 6px 10px; break-inside:avoid; }
+    .date-num{ font-size:1.1rem; }
+    .info-block .desc{ font-size:.72rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="app-header">
+    <h1>ハワイアン・ムーン・カレンダー</h1>
+    <p class="subtitle">愛泉の杜 ｰ ムーン手帖</p>
+
+    <div class="today-widget">
+      <div class="moon-wrap" id="todayMoon"></div>
+      <div>
+        <div class="label" id="todayLabel"></div>
+        <div class="name-line" id="todayName"></div>
+        <div class="desc" id="todayDesc"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="controls">
+    <div class="field">
+      <label for="yearInput">西暦年</label>
+      <select id="yearInput" required></select>
+    </div>
+    <div class="field">
+      <label for="monthInput">月</label>
+      <select id="monthInput" required>
+        <option value="1">1月</option>
+        <option value="2">2月</option>
+        <option value="3">3月</option>
+        <option value="4">4月</option>
+        <option value="5">5月</option>
+        <option value="6">6月</option>
+        <option value="7">7月</option>
+        <option value="8">8月</option>
+        <option value="9">9月</option>
+        <option value="10">10月</option>
+        <option value="11">11月</option>
+        <option value="12">12月</option>
+      </select>
+    </div>
+    <button id="generateBtn" type="button">表示する</button>
+  </section>
+
+  <div class="legend">
+    <span><i class="i-wax"></i>Ho'onui(満ちる)</span>
+    <span><i class="i-full"></i>Poepoe(満月期)</span>
+    <span><i class="i-wan"></i>Ho'emi(欠ける)</span>
+  </div>
+
+  <h2 class="cal-title" id="calTitle"></h2>
+  <div class="calendar-list" id="calendarList"></div>
+
+  <section class="print-section">
+    <button id="printBtn" type="button">PDFとして印刷</button>
+    <p class="print-hint">印刷ダイアログで「PDFに保存」を選ぶとPDF化できます</p>
+  </section>
+
+</div>
+
+<script>
+  const synodicMonth = 29.530588853;
+  const newMoonEpoch = Date.UTC(2000,0,6,18,14,0);
+  const dowNames = ['日','月','火','水','木','金','土'];
+
+  const moonData = [
+    {n:1,  name:"Hilo",          kana:"ヒロ",        desc:"新月直後。月が生まれ始める時期。"},
+    {n:2,  name:"Hoaka",         kana:"ホアカ",      desc:"細い弓状の月が現れる日。"},
+    {n:3,  name:"Kū-kahi",       kana:"クーカヒ",    desc:"行動や作業の開始に適した日。"},
+    {n:4,  name:"Kū-lua",        kana:"クールア",    desc:"成長が安定しやすい日。"},
+    {n:5,  name:"Kū-kolu",       kana:"クーコル",    desc:"物事が順調に進みやすい日。"},
+    {n:6,  name:"Kū-pau",        kana:"クーパウ",    desc:"Kūの力が満ちる日。作業がはかどる。"},
+    {n:7,  name:"ʻOle-kū-kahi",  kana:"オレクーカヒ", desc:"植え付けや漁に不向きな日。"},
+    {n:8,  name:"ʻOle-kū-lua",   kana:"オレクールア", desc:"計画の見直しに適した日。"},
+    {n:9,  name:"ʻOle-kū-kolu",  kana:"オレクーコル", desc:"休息や調整に向く日。"},
+    {n:10, name:"ʻOle-pau",      kana:"オレパウ",    desc:"不向き期間の締めくくりの日。"},
+    {n:11, name:"Huna",          kana:"フナ",        desc:"月が半分隠れたように見える日。"},
+    {n:12, name:"Mōhalu",        kana:"モーハル",    desc:"月がふくらみ、形が整う日。"},
+    {n:13, name:"Hua",           kana:"フア",        desc:"「実」を意味し、農作に適した日。"},
+    {n:14, name:"Akua",          kana:"アクア",      desc:"神聖視される日。漁に最適。"},
+    {n:15, name:"Hoku",          kana:"ホク",        desc:"満月の頂点。最も明るい日。"},
+    {n:16, name:"Māhealani",     kana:"マヘアラニ",  desc:"満月の余韻が続く日。"},
+    {n:17, name:"Kulu",          kana:"クル",        desc:"月が欠け始める時期。"},
+    {n:18, name:"Lāʻau-kū-kahi", kana:"ラーアウクーカヒ", desc:"植物に関する作業に適した日。"},
+    {n:19, name:"Lāʻau-kū-lua",  kana:"ラーアウクールア", desc:"植物の手入れや調整に向く日。"},
+    {n:20, name:"Lāʻau-kū-kolu", kana:"ラーアウクーコル", desc:"植物や身体の浄化に適した日。"},
+    {n:21, name:"ʻOle-kū-kahi",  kana:"オレクーカヒ", desc:"再び不向きな日。作業は控えめにする。"},
+    {n:22, name:"ʻOle-kū-lua",   kana:"オレクールア", desc:"不要なものを整理するのに適した日。"},
+    {n:23, name:"ʻOle-pau",      kana:"オレパウ",    desc:"不向き期間の締めの日。"},
+    {n:24, name:"Kāloa-kū-kahi", kana:"カーロアクーカヒ", desc:"海に関する活動に適した日。"},
+    {n:25, name:"Kāloa-kū-lua",  kana:"カーロアクールア", desc:"水に関する作業に良い日。"},
+    {n:26, name:"Kāloa-pau",     kana:"カーロアパウ", desc:"海の神Kāloaに関連し、浄化が深まる日。"},
+    {n:27, name:"Kāne",          kana:"カーネ",      desc:"生命や水を司る神Kāneに関連する日。"},
+    {n:28, name:"Lono",          kana:"ロノ",        desc:"豊穣の神Lonoに関連し、祈りに適した日。"},
+    {n:29, name:"Mauli",         kana:"マウリ",      desc:"月の光がほとんど残らない日。"},
+    {n:30, name:"Muku",          kana:"ムク",        desc:"月が完全に見えなくなる日。月周期の終わり。"},
+  ];
+
+  let iconUid = 0;
+
+  function moonAge(year, month, day){
+    const t = new Date(year, month-1, day, 12, 0, 0).getTime();
+    let age = ((t - newMoonEpoch) / 86400000) % synodicMonth;
+    if (age < 0) age += synodicMonth;
+    return age;
+  }
+
+  function moonIconSVG(age, size){
+    size = size || 30;
+    iconUid++;
+    const r = size/2 - 1.5;
+    const cx = size/2, cy = size/2;
+    const theta = (age/synodicMonth) * 2 * Math.PI;
+    const dx = r * (1 + Math.cos(theta));
+    const dir = age < synodicMonth/2 ? 1 : -1;
+    const lightCx = cx + dir*dx;
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true">'
+      + '<defs><clipPath id="mclip'+iconUid+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/></clipPath></defs>'
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--moon-dark)"/>'
+      + '<circle cx="'+lightCx+'" cy="'+cy+'" r="'+r+'" fill="var(--moon-light)" clip-path="url(#mclip'+iconUid+')"/>'
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>'
+      + '</svg>';
+  }
+
+  function phaseColor(n){
+    if (n <= 10) return 'var(--waxing)';
+    if (n <= 20) return 'var(--full)';
+    return 'var(--waning)';
+  }
+
+  function daysInMonth(year, month){
+    return new Date(year, month, 0).getDate();
+  }
+
+  function escapeHtml(str){
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderTodayWidget(){
+    const now = new Date();
+    const age = moonAge(now.getFullYear(), now.getMonth()+1, now.getDate());
+    const idx = Math.floor(age);
+    const info = moonData[idx];
+    document.getElementById('todayMoon').innerHTML = moonIconSVG(age, 44);
+    document.getElementById('todayLabel').textContent =
+      '今日 ' + now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日('
+      + dowNames[now.getDay()] + ')';
+    document.getElementById('todayName').innerHTML =
+      '<span class="num">' + info.n + '.</span> ' + escapeHtml(info.name)
+      + '<span class="kana">' + info.kana + '</span>';
+    document.getElementById('todayDesc').textContent = info.desc;
+  }
+
+  function populateYearSelect(){
+    const sel = document.getElementById('yearInput');
+    const current = new Date().getFullYear();
+    for (let y = current - 3; y <= current + 6; y++){
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y + '年';
+      if (y === current) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+
+  function render(){
+    const year = parseInt(document.getElementById('yearInput').value, 10);
+    const month = parseInt(document.getElementById('monthInput').value, 10);
+    if (!year || !month) return;
+
+    document.getElementById('calTitle').textContent = year + '年 ' + month + '月のムーンカレンダー';
+
+    const list = document.getElementById('calendarList');
+    list.innerHTML = '';
+
+    const dim = daysInMonth(year, month);
+    const now = new Date();
+
+    for (let d = 1; d <= dim; d++){
+      const age = moonAge(year, month, d);
+      const idx = Math.floor(age) % 30;
+      const info = moonData[idx];
+      const dateObj = new Date(year, month-1, d);
+      const dow = dowNames[dateObj.getDay()];
+      const isToday = (now.getFullYear() === year && now.getMonth()+1 === month && now.getDate() === d);
+
+      let dowClass = '';
+      if (dow === '日') dowClass = 'sun';
+      if (dow === '土') dowClass = 'sat';
+
+      const card = document.createElement('div');
+      card.className = 'day-card' + (isToday ? ' today' : '');
+      card.style.setProperty('--phase-color', phaseColor(info.n));
+      card.innerHTML =
+        '<div class="date-block">'
+          + '<div class="date-num">' + d + '</div>'
+          + '<div class="date-dow ' + dowClass + '">' + dow + '</div>'
+        + '</div>'
+        + '<div class="moon-wrap">' + moonIconSVG(age) + '</div>'
+        + '<div class="info-block">'
+          + '<div class="name-line"><span class="num">' + info.n + '.</span> '
+            + escapeHtml(info.name) + '<span class="kana">' + info.kana + '</span></div>'
+          + '<div class="desc">' + info.desc + '</div>'
+        + '</div>';
+      list.appendChild(card);
+    }
+  }
+
+  document.getElementById('generateBtn').addEventListener('click', render);
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+
+  populateYearSelect();
+  document.getElementById('monthInput').value = (new Date().getMonth()+1);
+  renderTodayWidget();
+  render();
+</script>
+</body>
+</html>

@@ -232,6 +232,7 @@ body {
 }
 
 .tool-card.moon   { --card-accent: linear-gradient(90deg, transparent, #6090e0, #c9a84c, transparent); }
+.tool-card.mooncal { --card-accent: linear-gradient(90deg, transparent, #4F9D94, #E2A23C, transparent); }
 .tool-card.talent { --card-accent: linear-gradient(90deg, transparent, #e8638a, #e8b85a, transparent); }
 .tool-card.truelove { --card-accent: linear-gradient(90deg, transparent, #d4608a, #c9a84c, transparent); }
 .tool-card.block { --card-accent: linear-gradient(90deg, transparent, #8060c0, #c9a84c, transparent); }
@@ -408,21 +409,37 @@ body {
   <!-- Tool Cards -->
   <div class="tools-grid">
 
-    <!-- Moon Reading (工事中) -->
-    <div class="tool-card coming">
-      <div class="card-icon" style="opacity:0.4">🌙</div>
-      <div class="card-badge badge-coming">🚧 工事中</div>
-      <div class="card-title" style="color:var(--text-dim)">月読みシート</div>
-      <div class="card-title-en" style="color:rgba(201,168,76,0.3)">Hawaiian Moon Reading</div>
+    <!-- Moon Reading -->
+    <a class="tool-card moon" href="moon_reading.html">
+      <div class="card-icon">🌙</div>
+      <div class="card-badge badge-live">✦ 公開中</div>
+      <div class="card-title">月読みシート</div>
+      <div class="card-title-en">Hawaiian Moon Reading</div>
       <div class="card-desc">
-        現在リニューアル準備中です。<br>より正確な情報でお届けできるよう改善中です。しばらくお待ちください。
+        生年月日から月齢（ハワイの30夜）を算出。今日の月が伝えるメッセージも確認できます。
       </div>
       <div class="card-tags">
         <span class="tag">🌺 ハワイアン</span>
         <span class="tag">🌙 月読み</span>
       </div>
-      <div class="card-arrow" style="color:var(--text-dim)">準備中…</div>
-    </div>
+      <div class="card-arrow">ツールを開く →</div>
+    </a>
+
+    <!-- Moon Calendar -->
+    <a class="tool-card mooncal" href="moon_calendar.html">
+      <div class="card-icon">📅</div>
+      <div class="card-badge badge-live">✦ 公開中</div>
+      <div class="card-title">ムーン・カレンダー</div>
+      <div class="card-title-en">Hawaiian Moon Calendar</div>
+      <div class="card-desc">
+        年月を選んで、ハワイの30夜の月齢カレンダーを表示。今日の月の状態もひと目で確認できます。
+      </div>
+      <div class="card-tags">
+        <span class="tag">🌺 ハワイアン</span>
+        <span class="tag">📅 月間カレンダー</span>
+      </div>
+      <div class="card-arrow">ツールを開く →</div>
+    </a>
 
     <!-- Talent Number -->
     <a class="tool-card talent" href="talent_number.html">
