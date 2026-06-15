@@ -199,10 +199,12 @@ select option { background: #1a1640; }
   transition: all 0.4s;
   box-shadow: 0 6px 25px rgba(201,168,76,0.35);
 }
-.btn-calc:hover {
-  background-position: 100% 0;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 35px rgba(201,168,76,0.5);
+@media (hover: hover) and (pointer: fine) {
+  .btn-calc:hover {
+    background-position: 100% 0;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 35px rgba(201,168,76,0.5);
+  }
 }
 
 /* ===== RESULT ===== */
@@ -586,10 +588,12 @@ select option { background: #1a1640; }
   transition: all 0.3s;
   box-shadow: 0 6px 25px rgba(201,168,76,0.3);
 }
-.btn-pdf:hover {
-  background-position: 100% 0;
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(201,168,76,0.45);
+@media (hover: hover) and (pointer: fine) {
+  .btn-pdf:hover {
+    background-position: 100% 0;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(201,168,76,0.45);
+  }
 }
 
 .print-footer {
@@ -675,7 +679,7 @@ select option { background: #1a1640; }
 }
 </style>
 </head>
-<body>
+<body ontouchstart="">
 
 <canvas id="starfield"></canvas>
 
