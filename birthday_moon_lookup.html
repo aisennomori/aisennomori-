@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>バースデー・ムーン診断 | 愛泉の杜</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+
+  :root{
+    --bg:#FBF6EC;
+    --card:#FFFFFF;
+    --ink:#3A322A;
+    --ink-soft:#9A8F80;
+    --line:#EAE1D2;
+    --waxing:#4F9D94;
+    --full:#E2A23C;
+    --waning:#8FAE7E;
+    --moon-dark:#2E2A24;
+    --moon-light:#F6CE5B;
+    --font-display:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif;
+    --font-body:'Zen Kaku Gothic New','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+  }
+
+  .page{
+    max-width:560px;
+    margin:0 auto;
+    padding:0 0 40px;
+    min-height:100vh;
+  }
+
+  header.app-header{
+    background:linear-gradient(180deg,#3E3A33 0%,#4A4339 100%);
+    color:#F7F1E4;
+    padding:22px 20px 26px;
+    border-radius:0 0 22px 22px;
+  }
+  header.app-header h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1.3rem;
+    letter-spacing:.04em;
+    margin:0 0 2px;
+  }
+  header.app-header .subtitle{
+    font-size:.75rem;
+    color:#CFC4AE;
+    letter-spacing:.08em;
+    margin:0;
+  }
+
+  .section-title{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:.95rem;
+    color:var(--ink);
+    margin:20px 16px 8px;
+  }
+
+  /* Input table */
+  .input-card{
+    margin:0 16px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px;
+    overflow-x:auto;
+  }
+  table.input-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.85rem;
+  }
+  table.input-table th{
+    font-size:.68rem;
+    color:var(--ink-soft);
+    text-align:left;
+    padding:4px 6px;
+    letter-spacing:.04em;
+  }
+  table.input-table td{
+    padding:3px 4px;
+  }
+  table.input-table input[type="text"]{
+    width:100%;
+    min-width:80px;
+    font-family:var(--font-body);
+    font-size:.85rem;
+    color:var(--ink);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:6px 8px;
+    background:#FCFAF5;
+  }
+  table.input-table input[type="date"]{
+    width:100%;
+    min-width:130px;
+    font-family:var(--font-body);
+    font-size:.82rem;
+    color:var(--ink);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:6px 6px;
+    background:#FCFAF5;
+  }
+  table.input-table .row-num{
+    color:var(--ink-soft);
+    font-size:.75rem;
+    text-align:center;
+    width:22px;
+  }
+
+  .input-actions{
+    display:flex;
+    gap:10px;
+    margin:12px 16px 0;
+  }
+  .input-actions button{
+    flex:1;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:.88rem;
+    letter-spacing:.04em;
+    border:none;
+    border-radius:10px;
+    padding:11px;
+    cursor:pointer;
+  }
+  .input-actions .btn-primary{
+    color:#FBF6EC;
+    background:var(--ink);
+  }
+  .input-actions .btn-secondary{
+    color:var(--ink);
+    background:#FCFAF5;
+    border:1px solid var(--line);
+  }
+  .input-actions button:active{ opacity:.85; }
+
+  .hint{
+    margin:8px 16px 0;
+    font-size:.72rem;
+    color:var(--ink-soft);
+  }
+
+  /* Results */
+  .result-list{
+    margin:8px 16px 0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .result-card{
+    position:relative;
+    display:grid;
+    grid-template-columns:36px 1fr;
+    gap:0 12px;
+    align-items:center;
+    padding:11px 14px 11px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .result-card:last-child{ border-bottom:none; }
+  .result-card::before{
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:4px;
+    background:var(--phase-color);
+  }
+  .result-card .moon-wrap{ display:flex; justify-content:center; }
+  .result-card .info-block{ min-width:0; }
+  .result-card .person-name{
+    font-weight:700;
+    font-size:.88rem;
+    color:var(--ink);
+  }
+  .result-card .person-date{
+    font-size:.7rem;
+    color:var(--ink-soft);
+    margin-left:6px;
+  }
+  .result-card .moon-name-line{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:.95rem;
+    color:var(--ink);
+    margin-top:2px;
+  }
+  .result-card .moon-name-line .num{
+    color:var(--ink-soft);
+    font-weight:400;
+    margin-right:3px;
+  }
+  .result-card .moon-name-line .kana{
+    font-weight:400;
+    font-size:.76rem;
+    color:var(--ink-soft);
+    margin-left:6px;
+  }
+  .result-card.error .moon-name-line{
+    color:#B05050;
+    font-family:var(--font-body);
+    font-weight:400;
+    font-size:.82rem;
+  }
+
+  .legend{
+    display:flex;
+    gap:14px;
+    margin:14px 16px 0;
+    font-size:.7rem;
+    color:var(--ink-soft);
+    flex-wrap:wrap;
+  }
+  .legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .legend i{
+    display:inline-block; width:10px; height:10px; border-radius:2px;
+  }
+  .legend .i-wax{ background:var(--waxing); }
+  .legend .i-full{ background:var(--full); }
+  .legend .i-wan{ background:var(--waning); }
+
+  .print-section{
+    margin:22px 16px 0;
+  }
+  .print-section button{
+    width:100%;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:1rem;
+    letter-spacing:.06em;
+    color:#FBF6EC;
+    background:var(--ink);
+    border:none;
+    border-radius:12px;
+    padding:14px;
+    cursor:pointer;
+  }
+  .print-section button:active{ opacity:.85; }
+  .print-hint{
+    text-align:center;
+    font-size:.7rem;
+    color:var(--ink-soft);
+    margin-top:8px;
+  }
+
+  @media print{
+    body{ background:#fff; }
+    header.app-header{
+      background:none; color:var(--ink); border-radius:0; padding:0 0 10px;
+    }
+    .section-title:first-of-type, .input-card, .input-actions, .hint{ display:none; }
+    .legend{ display:none; }
+    .print-section{ display:none; }
+    .result-list{ border:none; border-radius:0; margin:0; }
+    .page{ max-width:100%; padding:0; }
+    .result-card{ padding:6px 4px 6px 10px; break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="app-header">
+    <h1>バースデー・ムーン診断</h1>
+    <p class="subtitle">愛泉の杜 ｰ 生年月日からムーンデー番号を一括チェック</p>
+  </header>
+
+  <h2 class="section-title">名前と生年月日を入力(最大20件)</h2>
+
+  <div class="input-card">
+    <table class="input-table" id="inputTable">
+      <thead>
+        <tr>
+          <th class="row-num">#</th>
+          <th>名前</th>
+          <th>生年月日</th>
+        </tr>
+      </thead>
+      <tbody id="inputBody"></tbody>
+    </table>
+  </div>
+
+  <div class="input-actions">
+    <button class="btn-secondary" id="addRowBtn" type="button">＋行を追加</button>
+    <button class="btn-primary" id="calcBtn" type="button">診断する</button>
+  </div>
+  <p class="hint">入力した行のうち、名前または生年月日が空の行は無視されます。</p>
+
+  <div class="legend">
+    <span><i class="i-wax"></i>Ho'onui(満ちる)</span>
+    <span><i class="i-full"></i>Poepoe(満月期)</span>
+    <span><i class="i-wan"></i>Ho'emi(欠ける)</span>
+  </div>
+
+  <h2 class="section-title" id="resultTitle" style="display:none;">診断結果</h2>
+  <div class="result-list" id="resultList"></div>
+
+  <section class="print-section" id="printSection" style="display:none;">
+    <button id="printBtn" type="button">PDFとして印刷</button>
+    <p class="print-hint">印刷ダイアログで「PDFに保存」を選ぶとPDF化できます</p>
+  </section>
+
+</div>
+
+<script>
+  const MAX_ROWS = 20;
+
+  const moonData = [
+    null,
+    {n:1,  name:"Hilo",          kana:"ヒロ"},
+    {n:2,  name:"Hoaka",         kana:"ホアカ"},
+    {n:3,  name:"Kū-kahi",       kana:"クーカヒ"},
+    {n:4,  name:"Kū-lua",        kana:"クールア"},
+    {n:5,  name:"Kū-kolu",       kana:"クーコル"},
+    {n:6,  name:"Kū-pau",        kana:"クーパウ"},
+    {n:7,  name:"ʻOle-kū-kahi",  kana:"オレクーカヒ"},
+    {n:8,  name:"ʻOle-kū-lua",   kana:"オレクールア"},
+    {n:9,  name:"ʻOle-kū-kolu",  kana:"オレクーコル"},
+    {n:10, name:"ʻOle-pau",      kana:"オレパウ"},
+    {n:11, name:"Huna",          kana:"フナ"},
+    {n:12, name:"Mōhalu",        kana:"モーハル"},
+    {n:13, name:"Hua",           kana:"フア"},
+    {n:14, name:"Akua",          kana:"アクア"},
+    {n:15, name:"Hoku",          kana:"ホク"},
+    {n:16, name:"Māhealani",     kana:"マヘアラニ"},
+    {n:17, name:"Kulu",          kana:"クル"},
+    {n:18, name:"Lāʻau-kū-kahi", kana:"ラーアウクーカヒ"},
+    {n:19, name:"Lāʻau-kū-lua",  kana:"ラーアウクールア"},
+    {n:20, name:"Lāʻau-kū-kolu", kana:"ラーアウクーコル"},
+    {n:21, name:"ʻOle-kū-kahi",  kana:"オレクーカヒ"},
+    {n:22, name:"ʻOle-kū-lua",   kana:"オレクールア"},
+    {n:23, name:"ʻOle-pau",      kana:"オレパウ"},
+    {n:24, name:"Kāloa-kū-kahi", kana:"カーロアクーカヒ"},
+    {n:25, name:"Kāloa-kū-lua",  kana:"カーロアクールア"},
+    {n:26, name:"Kāloa-pau",     kana:"カーロアパウ"},
+    {n:27, name:"Kāne",          kana:"カーネ"},
+    {n:28, name:"Lono",          kana:"ロノ"},
+    {n:29, name:"Mauli",         kana:"マウリ"},
+    {n:30, name:"Muku",          kana:"ムク"},
+  ];
+
+  let iconUid = 0;
+
+  // ============================================================
+  // Astronomical new-moon calculation (Meeus low-precision series)
+  // ============================================================
+  function newMoonJDE(k) {
+    const T = k / 1236.85;
+    const T2 = T*T, T3 = T2*T, T4 = T3*T;
+    let JDE = 2451550.09766 + 29.530588861*k
+      + 0.00015437*T2 - 0.000000150*T3 + 0.00000000073*T4;
+
+    const M  = 2.5534 + 29.10535670*k - 0.0000014*T2 - 0.00000011*T3;
+    const Mp = 201.5643 + 385.81693528*k + 0.0107582*T2 + 0.00001238*T3 - 0.000000058*T4;
+    const F  = 160.7108 + 390.67050284*k - 0.0016118*T2 - 0.00000227*T3 + 0.000000011*T4;
+    const Om = 124.7746 - 1.56375588*k + 0.0020672*T2 + 0.00000215*T3;
+
+    const d2r = Math.PI/180;
+    const Ms = (M  % 360) * d2r;
+    const Mm = (Mp % 360) * d2r;
+    const Fm = (F  % 360) * d2r;
+    const Og = (Om % 360) * d2r;
+    const E  = 1 - 0.002516*T - 0.0000074*T2;
+
+    let corr = 0;
+    corr += -0.40720 * Math.sin(Mm);
+    corr +=  0.17241 * E * Math.sin(Ms);
+    corr +=  0.01608 * Math.sin(2*Mm);
+    corr +=  0.01039 * Math.sin(2*Fm);
+    corr +=  0.00739 * E * Math.sin(Mm - Ms);
+    corr += -0.00514 * E * Math.sin(Mm + Ms);
+    corr +=  0.00208 * E*E * Math.sin(2*Ms);
+    corr += -0.00111 * Math.sin(Mm - 2*Fm);
+    corr += -0.00057 * Math.sin(Mm + 2*Fm);
+    corr +=  0.00056 * E * Math.sin(2*Mm + Ms);
+    corr += -0.00042 * Math.sin(3*Mm);
+    corr +=  0.00042 * E * Math.sin(Ms + 2*Fm);
+    corr +=  0.00038 * E * Math.sin(Ms - 2*Fm);
+    corr += -0.00024 * E * Math.sin(2*Mm - Ms);
+    corr += -0.00017 * Math.sin(Og);
+    corr += -0.00007 * Math.sin(Mm + 2*Ms);
+    corr +=  0.00004 * Math.sin(2*Mm - 2*Fm);
+    corr +=  0.00004 * Math.sin(3*Ms);
+    corr +=  0.00003 * Math.sin(Mm + Ms - 2*Fm);
+    corr +=  0.00003 * Math.sin(2*Mm + 2*Fm);
+    corr += -0.00003 * Math.sin(Mm + Ms + 2*Fm);
+    corr +=  0.00003 * Math.sin(Mm - Ms + 2*Fm);
+    corr += -0.00002 * Math.sin(Mm - Ms - 2*Fm);
+    corr += -0.00002 * Math.sin(3*Mm + Ms);
+    corr +=  0.00002 * Math.sin(4*Mm);
+
+    return JDE + corr;
+  }
+
+  function jdeToUTCDate(jde) {
+    return new Date((jde - 2440587.5) * 86400000);
+  }
+
+  function kForYearMonth(year, month) {
+    const yearsFrac = year + (month - 0.5) / 12 - 2000;
+    return Math.floor(yearsFrac * 12.3685);
+  }
+
+  function newMoonCalendarDays(year) {
+    const kStart = kForYearMonth(year, 1) - 3;
+    const kEnd   = kForYearMonth(year, 12) + 3;
+    const days = [];
+    for (let k = kStart; k <= kEnd; k++) {
+      const utc = jdeToUTCDate(newMoonJDE(k));
+      const jst = new Date(utc.getTime() + 9*3600*1000);
+      days.push(Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate()));
+    }
+    days.sort((a,b)=>a-b);
+    return days.filter((d,i)=> i===0 || d!==days[i-1]);
+  }
+
+  const newMoonCache = {};
+  function getNewMoonDays(year){
+    if (!newMoonCache[year]) newMoonCache[year] = newMoonCalendarDays(year);
+    return newMoonCache[year];
+  }
+
+  function surroundingNewMoons(year, month, day){
+    const target = Date.UTC(year, month-1, day);
+    let candidates = getNewMoonDays(year);
+    candidates = getNewMoonDays(year-1).concat(candidates).concat(getNewMoonDays(year+1));
+
+    let nmIdx = -1;
+    for (let i=0; i<candidates.length; i++){
+      if (candidates[i] <= target) nmIdx = i;
+      else break;
+    }
+    return { nm: candidates[nmIdx], nextNm: candidates[nmIdx+1] };
+  }
+
+  function moonDayInfo(year, month, day){
+    const target = Date.UTC(year, month-1, day);
+    const { nm, nextNm } = surroundingNewMoons(year, month, day);
+    const dayIdx = Math.round((target - nm) / 86400000);
+    const lunLen = Math.round((nextNm - nm) / 86400000);
+    const n = (dayIdx === 0) ? 30 : dayIdx;
+    return { n, dayIdx, lunLen };
+  }
+
+  // ============================================================
+  // Rendering
+  // ============================================================
+  function moonIconSVG(dayIdx, lunLen, size){
+    size = size || 30;
+    iconUid++;
+    const r = size/2 - 1.5;
+    const cx = size/2, cy = size/2;
+    const theta = (dayIdx/lunLen) * 2 * Math.PI;
+    const dx = r * (1 + Math.cos(theta));
+    const dir = dayIdx < lunLen/2 ? 1 : -1;
+    const lightCx = cx + dir*dx;
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true">'
+      + '<defs><clipPath id="mclip'+iconUid+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/></clipPath></defs>'
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--moon-dark)"/>'
+      + '<circle cx="'+lightCx+'" cy="'+cy+'" r="'+r+'" fill="var(--moon-light)" clip-path="url(#mclip'+iconUid+')"/>'
+      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>'
+      + '</svg>';
+  }
+
+  function phaseColor(n){
+    if (n <= 10) return 'var(--waxing)';
+    if (n <= 20) return 'var(--full)';
+    return 'var(--waning)';
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ============================================================
+  // Input table handling
+  // ============================================================
+  let rowCount = 0;
+
+  function addRow(){
+    if (rowCount >= MAX_ROWS) return;
+    rowCount++;
+    const tbody = document.getElementById('inputBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="row-num">' + rowCount + '</td>'
+      + '<td><input type="text" class="name-input" placeholder="例: 山田太郎"></td>'
+      + '<td><input type="date" class="date-input"></td>';
+    tbody.appendChild(tr);
+    updateAddButtonState();
+  }
+
+  function updateAddButtonState(){
+    document.getElementById('addRowBtn').disabled = (rowCount >= MAX_ROWS);
+    document.getElementById('addRowBtn').style.opacity = (rowCount >= MAX_ROWS) ? '0.5' : '1';
+  }
+
+  function initialRows(n){
+    for (let i=0;i<n;i++) addRow();
+  }
+
+  function calculate(){
+    const nameInputs = document.querySelectorAll('.name-input');
+    const dateInputs = document.querySelectorAll('.date-input');
+
+    const entries = [];
+    for (let i=0;i<nameInputs.length;i++){
+      const name = nameInputs[i].value.trim();
+      const dateStr = dateInputs[i].value; // yyyy-mm-dd
+      if (!name || !dateStr) continue;
+      entries.push({ name, dateStr });
+    }
+
+    const resultList = document.getElementById('resultList');
+    const resultTitle = document.getElementById('resultTitle');
+    const printSection = document.getElementById('printSection');
+    resultList.innerHTML = '';
+
+    if (entries.length === 0){
+      resultTitle.style.display = 'none';
+      printSection.style.display = 'none';
+      return;
+    }
+
+    resultTitle.style.display = '';
+    printSection.style.display = '';
+
+    for (const entry of entries){
+      const parts = entry.dateStr.split('-').map(Number);
+      const y = parts[0], m = parts[1], d = parts[2];
+
+      const card = document.createElement('div');
+      card.className = 'result-card';
+
+      let valid = true;
+      let info = null;
+      try {
+        info = moonDayInfo(y, m, d);
+        if (!info.n || isNaN(info.n)) valid = false;
+      } catch(e){ valid = false; }
+
+      if (!valid){
+        card.classList.add('error');
+        card.style.setProperty('--phase-color', '#CCCCCC');
+        card.innerHTML =
+          '<div class="moon-wrap"></div>'
+          + '<div class="info-block">'
+            + '<span class="person-name">' + escapeHtml(entry.name) + '</span>'
+            + '<span class="person-date">' + escapeHtml(entry.dateStr) + '</span>'
+            + '<div class="moon-name-line">日付を計算できませんでした</div>'
+          + '</div>';
+        resultList.appendChild(card);
+        continue;
+      }
+
+      const moon = moonData[info.n];
+      const dateLabel = y + '/' + m + '/' + d;
+
+      card.style.setProperty('--phase-color', phaseColor(info.n));
+      card.innerHTML =
+        '<div class="moon-wrap">' + moonIconSVG(info.dayIdx, info.lunLen, 32) + '</div>'
+        + '<div class="info-block">'
+          + '<span class="person-name">' + escapeHtml(entry.name) + '</span>'
+          + '<span class="person-date">' + escapeHtml(dateLabel) + '</span>'
+          + '<div class="moon-name-line"><span class="num">' + moon.n + '.</span> '
+            + escapeHtml(moon.name) + '<span class="kana">' + moon.kana + '</span></div>'
+        + '</div>';
+      resultList.appendChild(card);
+    }
+  }
+
+  document.getElementById('addRowBtn').addEventListener('click', addRow);
+  document.getElementById('calcBtn').addEventListener('click', calculate);
+  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+
+  initialRows(5);
+</script>
+</body>
+</html>
