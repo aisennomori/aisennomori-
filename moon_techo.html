@@ -155,7 +155,7 @@
     width: 90.4%;
     font-family:var(--font-display);
     font-weight:700;
-    font-size: 2.05vw;
+    font-size: min(2.05vw, 11px);
     color:#3A322A;
     text-align:left;
     letter-spacing:.02em;
@@ -171,17 +171,12 @@
   .sheet .cell .md{
     font-family:var(--font-body);
     font-weight:700;
-    font-size: 1.42vw;
-    color:#3A322A;
-  }
-  .sheet .cell .dow{
-    font-size: 1.42vw;
+    font-size: min(1.42vw, 8px);
     color:#3A322A;
     margin-left:0.15em;
   }
   .sheet .cell .mk{
-    font-size: 1.42vw;
-    margin-left:0.2em;
+    font-size: min(1.42vw, 8px);
   }
   .sheet .cell.today .md,
   .sheet .cell.today .dow{
