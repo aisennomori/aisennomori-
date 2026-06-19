@@ -135,6 +135,7 @@
     border-radius:10px;
     overflow:hidden;
     box-shadow:0 4px 18px rgba(0,0,0,0.06);
+    container-type: inline-size;
   }
   .sheet{
     position:relative;
@@ -155,7 +156,7 @@
     width: 90.4%;
     font-family:var(--font-display);
     font-weight:700;
-    font-size: min(2.05vw, 11px);
+    font-size: 2.05cqw;
     color:#3A322A;
     text-align:left;
     letter-spacing:.02em;
@@ -171,12 +172,17 @@
   .sheet .cell .md{
     font-family:var(--font-body);
     font-weight:700;
-    font-size: min(1.42vw, 8px);
+    font-size: 1.42cqw;
+    color:#3A322A;
+  }
+  .sheet .cell .dow{
+    font-size: 1.1cqw;
     color:#3A322A;
     margin-left:0.15em;
   }
   .sheet .cell .mk{
-    font-size: min(1.42vw, 8px);
+    font-size: 1.42cqw;
+    margin-left:0.2em;
   }
   .sheet .cell.today .md,
   .sheet .cell.today .dow{
