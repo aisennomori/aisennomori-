@@ -295,6 +295,36 @@
     cursor:pointer; color:var(--ink);
   }
 
+  /* ===== Tooltip ===== */
+  .tt-wrap{ position:relative; width:100%; }
+  .tooltip{
+    position:absolute;
+    bottom:calc(100% + 6px);
+    left:50%; transform:translateX(-50%);
+    background:rgba(46,40,32,0.93);
+    color:#F7F2E8;
+    font-size:max(1.8cqw, 9px);
+    font-family:var(--font-display);
+    white-space:nowrap;
+    padding:4px 8px;
+    border-radius:6px;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .18s;
+    z-index:100;
+    letter-spacing:.03em;
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);
+  }
+  .tooltip::after{
+    content:'';
+    position:absolute;
+    top:100%; left:50%; transform:translateX(-50%);
+    border:5px solid transparent;
+    border-top-color:rgba(46,40,32,0.93);
+  }
+  .tt-wrap:hover .tooltip,
+  .tt-wrap.tip-open .tooltip{ opacity:1; }
+
   @media print{
     body{ background:#fff; }
     header.app-header,.controls,.view-toggle,.cycle-nav .nav-btn,
@@ -380,36 +410,36 @@
 
   const moonData=[
     null,
-    {n:1,  name:"Hilo",          kana:"ヒロ",             icon:"🌑"},
-    {n:2,  name:"Hoaka",         kana:"ホアカ",            icon:"🌒"},
-    {n:3,  name:"Ku-kahi",       kana:"クーカヒ",          icon:"🌒"},
-    {n:4,  name:"Ku-lua",        kana:"クールア",          icon:"🌒"},
-    {n:5,  name:"Ku-kolu",       kana:"クーコル",          icon:"🌓"},
-    {n:6,  name:"Ku-pau",        kana:"クーパウ",          icon:"🌓"},
-    {n:7,  name:"Ole-ku-kahi",   kana:"オレクーカヒ",      icon:"🌔"},
-    {n:8,  name:"Ole-ku-lua",    kana:"オレクールア",      icon:"🌔"},
-    {n:9,  name:"Ole-ku-kolu",   kana:"オレクーコル",      icon:"🌔"},
-    {n:10, name:"Ole-pau",       kana:"オレパウ",          icon:"🌔"},
-    {n:11, name:"Huna",          kana:"フナ",              icon:"🌔"},
-    {n:12, name:"Mohalu",        kana:"モーハル",          icon:"🌕"},
-    {n:13, name:"Hua",           kana:"ファア",            icon:"🌕"},
-    {n:14, name:"Akua",          kana:"アクア",            icon:"🌕"},
-    {n:15, name:"Hoku",          kana:"ホク",              icon:"🌕"},
-    {n:16, name:"Mahealani",     kana:"マヘアラニ",        icon:"🌕"},
-    {n:17, name:"Kulu",          kana:"クル",              icon:"🌖"},
-    {n:18, name:"Laau-ku-kahi",  kana:"ラーアウクーカヒ",  icon:"🌖"},
-    {n:19, name:"Laau-ku-lua",   kana:"ラーアウクールア",  icon:"🌗"},
-    {n:20, name:"Laau-pau",      kana:"ラーアウパウ",      icon:"🌗"},
-    {n:21, name:"Ole-ku-kahi",   kana:"オレクーカヒ",      icon:"🌗"},
-    {n:22, name:"Ole-ku-lua",    kana:"オレクールア",      icon:"🌗"},
-    {n:23, name:"Ole-pau",       kana:"オレパウ",          icon:"🌘"},
-    {n:24, name:"Kaloa-ku-kahi", kana:"カーロアクーカヒ",  icon:"🌘"},
-    {n:25, name:"Kaloa-ku-lua",  kana:"カーロアクールア",  icon:"🌘"},
-    {n:26, name:"Kaloa-pau",     kana:"カーロアパウ",      icon:"🌘"},
-    {n:27, name:"Kane",          kana:"カーネ",            icon:"🌘"},
-    {n:28, name:"Lono",          kana:"ロノ",              icon:"🌑"},
-    {n:29, name:"Mauli",         kana:"マウリ",            icon:"🌑"},
-    {n:30, name:"Muku",          kana:"ムク",              icon:"🌑"},
+    {n:1,  name:"Hilo",          kana:"ヒロ",             icon:"🌑", short:"始まりの芽生え"},
+    {n:2,  name:"Hoaka",         kana:"ホアカ",            icon:"🌒", short:"光の兆し"},
+    {n:3,  name:"Ku-kahi",       kana:"クーカヒ",          icon:"🌒", short:"意志が立つ"},
+    {n:4,  name:"Ku-lua",        kana:"クールア",          icon:"🌒", short:"基盤を固める"},
+    {n:5,  name:"Ku-kolu",       kana:"クーコル",          icon:"🌓", short:"形が整う"},
+    {n:6,  name:"Ku-pau",        kana:"クーパウ",          icon:"🌓", short:"行動の完了"},
+    {n:7,  name:"Ole-ku-kahi",   kana:"オレクーカヒ",      icon:"🌔", short:"停滞の始まり"},
+    {n:8,  name:"Ole-ku-lua",    kana:"オレクールア",      icon:"🌔", short:"無理は禁物"},
+    {n:9,  name:"Ole-ku-kolu",   kana:"オレクーコル",      icon:"🌔", short:"流れに任せる"},
+    {n:10, name:"Ole-pau",       kana:"オレパウ",          icon:"🌔", short:"停滞の終わり"},
+    {n:11, name:"Huna",          kana:"フナ",              icon:"🌔", short:"静かに満ちる"},
+    {n:12, name:"Mohalu",        kana:"モーハル",          icon:"🌕", short:"花開く日"},
+    {n:13, name:"Hua",           kana:"ファア",            icon:"🌕", short:"実りの兆し"},
+    {n:14, name:"Akua",          kana:"アクア",            icon:"🌕", short:"神聖が満ちる"},
+    {n:15, name:"Hoku",          kana:"ホク",              icon:"🌕", short:"満月の力"},
+    {n:16, name:"Mahealani",     kana:"マヘアラニ",        icon:"🌕", short:"最高潮の光"},
+    {n:17, name:"Kulu",          kana:"クル",              icon:"🌖", short:"手放しの始まり"},
+    {n:18, name:"Laau-ku-kahi",  kana:"ラーアウクーカヒ",  icon:"🌖", short:"植物の力①"},
+    {n:19, name:"Laau-ku-lua",   kana:"ラーアウクールア",  icon:"🌗", short:"植物の力②"},
+    {n:20, name:"Laau-pau",      kana:"ラーアウパウ",      icon:"🌗", short:"植物の完了"},
+    {n:21, name:"Ole-ku-kahi",   kana:"オレクーカヒ",      icon:"🌗", short:"浄化の始まり"},
+    {n:22, name:"Ole-ku-lua",    kana:"オレクールア",      icon:"🌗", short:"整理が進む"},
+    {n:23, name:"Ole-pau",       kana:"オレパウ",          icon:"🌘", short:"浄化の完了"},
+    {n:24, name:"Kaloa-ku-kahi", kana:"カーロアクーカヒ",  icon:"🌘", short:"海の力①"},
+    {n:25, name:"Kaloa-ku-lua",  kana:"カーロアクールア",  icon:"🌘", short:"海の力②"},
+    {n:26, name:"Kaloa-pau",     kana:"カーロアパウ",      icon:"🌘", short:"海の最大浄化"},
+    {n:27, name:"Kane",          kana:"カーネ",            icon:"🌘", short:"生命の源"},
+    {n:28, name:"Lono",          kana:"ロノ",              icon:"🌑", short:"恵みと調和"},
+    {n:29, name:"Mauli",         kana:"マウリ",            icon:"🌑", short:"生命の残り火"},
+    {n:30, name:"Muku",          kana:"ムク",              icon:"🌑", short:"完全な終わり"},
   ];
 
   const GROUPS=[
@@ -479,9 +509,21 @@
     return da.getUTCFullYear()===db.getUTCFullYear()&&da.getUTCMonth()===db.getUTCMonth()&&da.getUTCDate()===db.getUTCDate();
   }
 
-  // ============================================================
-  // モード管理
-  // ============================================================
+  // ===== ツールチップ（タッチデバイス対応） =====
+  let openTip=null;
+  function addTooltipTouch(wrap){
+    wrap.addEventListener('touchstart',function(e){
+      e.stopPropagation();
+      if(openTip&&openTip!==wrap) openTip.classList.remove('tip-open');
+      wrap.classList.toggle('tip-open');
+      openTip=wrap.classList.contains('tip-open')?wrap:null;
+    },{passive:true});
+  }
+  document.addEventListener('touchstart',function(){
+    if(openTip){openTip.classList.remove('tip-open');openTip=null;}
+  },{passive:true});
+
+  // ===== モード管理 =====
   let currentMode = localStorage.getItem('moonTechoMode') || 'grid';
   let displayedCycle = null;
 
@@ -519,12 +561,22 @@
       grid.className='day-grid';
       for(let n=group.range[0];n<=group.range[1];n++){
         const md=moonData[n],di=dayMap[n];
+        const wrap=document.createElement('div');
+        wrap.className='tt-wrap';
+        const tip=document.createElement('div');
+        tip.className='tooltip';
+        tip.textContent=md.short||'';
+        wrap.appendChild(tip);
         const cell=document.createElement('div');
         if(!di){
           cell.className='day-cell no-date';
           cell.innerHTML='<span class="moon-icon">'+md.icon+'</span>'+
             '<span class="haw-name">'+md.name+'</span>'+
-            '<span class="moon-num">'+n+'</span>';
+            '<span class="kana">'+md.kana+'</span>'+
+            '<span class="moon-num">'+n+'</span>'+
+            '<span class="date-info" style="visibility:hidden">-/-</span>'+
+            '<span class="dow-info" style="visibility:hidden">(-)</span>'+
+            '<span class="marker"> </span>';
         } else {
           cell.className='day-cell'+(di.isToday?' today':'');
           const mk=markerForN(n);
@@ -534,9 +586,11 @@
             '<span class="moon-num">'+n+'</span>'+
             '<span class="date-info">'+fmtShort(di.ms)+'</span>'+
             '<span class="dow-info">('+dowNames[new Date(di.ms).getUTCDay()]+')</span>'+
-            (mk?'<span class="marker">'+mk+'</span>':'');
+            '<span class="marker">'+(mk||'&nbsp;')+'</span>';
         }
-        grid.appendChild(cell);
+        wrap.appendChild(cell);
+        addTooltipTouch(wrap);
+        grid.appendChild(wrap);
       }
       block.appendChild(grid);
       inner.appendChild(block);
@@ -557,13 +611,23 @@
       grid.className='card-grid';
       for(let n=group.range[0];n<=group.range[1];n++){
         const md=moonData[n],di=dayMap[n];
+        const wrap=document.createElement('div');
+        wrap.className='tt-wrap';
+        const tip=document.createElement('div');
+        tip.className='tooltip';
+        tip.textContent=md.short||'';
+        wrap.appendChild(tip);
         const card=document.createElement('div');
         if(!di){
           card.className='day-card no-date';
           card.innerHTML='<span class="moon-icon">'+md.icon+'</span>'+
             '<span class="moon-num">'+n+'</span>'+
             '<span class="haw-name">'+md.name+'</span>'+
-            '<span class="kana">'+md.kana+'</span>';
+            '<span class="kana">'+md.kana+'</span>'+
+            '<div class="divider"></div>'+
+            '<span class="date-info" style="visibility:hidden">-/-</span>'+
+            '<span class="dow-info" style="visibility:hidden">(-)</span>'+
+            '<span class="marker"> </span>';
         } else {
           card.className='day-card'+(di.isToday?' today':'');
           const mk=markerForN(n);
@@ -574,9 +638,11 @@
             '<div class="divider"></div>'+
             '<span class="date-info">'+fmtShort(di.ms)+'</span>'+
             '<span class="dow-info">('+dowNames[new Date(di.ms).getUTCDay()]+')</span>'+
-            (mk?'<span class="marker">'+mk+'</span>':'');
+            '<span class="marker">'+(mk||'&nbsp;')+'</span>';
         }
-        grid.appendChild(card);
+        wrap.appendChild(card);
+        addTooltipTouch(wrap);
+        grid.appendChild(wrap);
       }
       sec.appendChild(grid);
       inner.appendChild(sec);
