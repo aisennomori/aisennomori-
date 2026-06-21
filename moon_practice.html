@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ムーン30夜 読み上げ練習 | 愛泉の杜</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+  :root{--bg:#FBF6EC;--card:#FFFFFF;--ink:#3A322A;--ink-soft:#9A8F80;--line:#EAE1D2;--teal:#4F9D94;--gold:#D4A432;--moon-dark:#2E2A24;--moon-light:#F6CE5B;--font-d:'Shippori Mincho','Hiragino Mincho ProN',serif;--font-b:'Zen Kaku Gothic New','Hiragino Kaku Gothic ProN',sans-serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--font-b);min-height:100vh;}
+  .page{max-width:480px;margin:0 auto;padding:0 0 48px;}
+  header{background:linear-gradient(180deg,#3E3A33,#4A4339);color:#F7F1E4;padding:24px 20px 28px;border-radius:0 0 24px 24px;}
+  header h1{font-family:var(--font-d);font-size:1.25rem;font-weight:700;letter-spacing:.04em;margin-bottom:2px;}
+  header p{font-size:.72rem;color:#CFC4AE;letter-spacing:.06em;}
+  .back-link{display:inline-block;margin:14px 16px 0;font-size:.75rem;color:var(--teal);text-decoration:none;font-weight:700;letter-spacing:.05em;}
+  .back-link:hover{text-decoration:underline;}
+  .mode-tabs{display:flex;margin:14px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .mode-tab{flex:1;padding:11px 4px;text-align:center;font-family:var(--font-d);font-size:.74rem;font-weight:700;color:var(--ink-soft);cursor:pointer;border:none;background:none;letter-spacing:.01em;transition:background .2s,color .2s;}
+  .mode-tab.active{background:var(--ink);color:#FBF6EC;border-radius:12px;}
+  .display-card{margin:16px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 20px 24px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+  .hawaii-name.hidden,.kana-name.hidden{visibility:hidden;opacity:0;}
+  .hawaii-name,.kana-name{transition:opacity .25s;}
+  .display-card .phase-emoji{font-size:2.2rem;margin-bottom:6px;}
+  .display-card .night-num{font-family:var(--font-d);font-size:3rem;font-weight:700;color:var(--gold);line-height:1;}
+  .display-card .hawaii-name{font-family:var(--font-d);font-size:1.6rem;font-weight:700;color:var(--ink);margin-top:10px;line-height:1.2;}
+  .display-card .kana-name{font-size:1.05rem;color:var(--ink-soft);margin-top:6px;}
+  .display-card .phase-label{position:absolute;top:14px;right:16px;font-size:.68rem;color:var(--ink-soft);background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:3px 10px;}
+  .display-card.speaking{border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,157,148,.18);}
+  .progress-bar-wrap{margin:12px 16px 0;background:var(--line);border-radius:99px;height:5px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:99px;transition:width .3s;}
+  .progress-label{margin:6px 16px 0;display:flex;justify-content:space-between;font-size:.7rem;color:var(--ink-soft);}
+  .auto-controls{margin:16px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .step-btns{display:flex;gap:8px;margin-bottom:10px;}
+  .step-btn{flex:1;padding:9px 4px;border:1px solid var(--line);border-radius:9px;background:#FCFAF5;font-family:var(--font-d);font-size:.78rem;font-weight:700;color:var(--ink-soft);cursor:pointer;text-align:center;transition:background .2s,color .2s,border-color .2s;}
+  .step-btn.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+  .play-row{display:flex;gap:10px;align-items:center;}
+  .play-btn{flex:1;padding:12px;border:none;border-radius:12px;font-family:var(--font-d);font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.04em;}
+  .play-btn.start{background:var(--ink);color:#FBF6EC;}
+  .play-btn.stop{background:#C25450;color:#FBF6EC;}
+  .play-btn:active{opacity:.85;}
+  .speed-label{font-size:.7rem;color:var(--ink-soft);text-align:center;margin-top:6px;}
+  .tap-controls{margin:16px 16px 0;}
+  .tap-main-btn{width:100%;padding:18px;border:none;border-radius:16px;background:var(--ink);color:#FBF6EC;font-family:var(--font-d);font-size:1.15rem;font-weight:700;cursor:pointer;letter-spacing:.04em;margin-bottom:10px;}
+  .tap-main-btn:active{opacity:.85;}
+  .tap-main-btn.speaking{background:var(--teal);}
+  .tap-nav{display:flex;gap:10px;}
+  .tap-nav button{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-family:var(--font-b);font-size:.9rem;color:var(--ink);cursor:pointer;}
+  .tap-nav button:active{background:var(--line);}
+  .step-info{margin:12px 16px 0;background:#F0FAFA;border:1px solid #B8DDD9;border-radius:12px;padding:10px 14px;font-size:.78rem;color:#2E6A65;line-height:1.6;}
+  .notice{margin:14px 16px 0;font-size:.7rem;color:var(--ink-soft);line-height:1.6;text-align:center;}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>🌺 ムーン30夜 読み上げ練習</h1>
+    <p>愛泉の杜 ｰ 数字 → ハワイ語 音声練習</p>
+  </header>
+
+  <a class="back-link" href="moon_tools.html">← 月読みツール集へ戻る</a>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabAuto"     onclick="switchMode('auto')">🔄 自動再生</button>
+    <button class="mode-tab"        id="tabPractice" onclick="switchMode('practice')">📖 練習</button>
+    <button class="mode-tab"        id="tabTap"      onclick="switchMode('tap')">📝 テスト</button>
+  </div>
+
+  <div class="display-card" id="displayCard">
+    <span class="phase-label" id="phaseLabel">—</span>
+    <div id="moonSvgWrap" style="margin-bottom:6px;"></div>
+    <div class="night-num" id="nightNum">—</div>
+    <div class="hawaii-name" id="hawaiiName">ハワイアン</div>
+    <div class="kana-name" id="kanaName">ムーン30夜</div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="progress-label">
+    <span id="progressText">0 / 30</span>
+    <span id="progressPct"></span>
+  </div>
+
+  <div class="step-info" id="stepInfo">スタートボタンを押すと読み上げが始まります。</div>
+
+  <div class="auto-controls" id="autoControls">
+    <div class="step-btns">
+      <button class="step-btn active" id="stepBtn1" onclick="selectStep(1)">🔀 ランダム</button>
+      <button class="step-btn" id="stepBtn2" onclick="selectStep(2)">② 普通</button>
+      <button class="step-btn" id="stepBtn3" onclick="selectStep(3)">③ まとめ</button>
+    </div>
+    <div class="play-row">
+      <button class="play-btn start" id="playBtn" onclick="togglePlay()">▶ スタート</button>
+    </div>
+    <div class="speed-label" id="speedLabel">ランダム：30夜をシャッフルして読み上げます</div>
+  </div>
+
+  <div class="tap-controls" id="practiceControls" style="display:none;">
+    <button class="tap-main-btn" id="practiceSpeakBtn" onclick="practiceSpeak()">🔊 読み上げる</button>
+    <div class="tap-nav">
+      <button onclick="practiceNav(-1)">◀ 前</button>
+      <button onclick="practiceNav(1)">次 ▶</button>
+    </div>
+  </div>
+
+  <div class="tap-controls" id="tapControls" style="display:none;">
+    <button class="tap-main-btn" id="tapSpeakBtn" onclick="tapSpeak()">🔊 読み上げて答えを表示</button>
+    <div class="tap-nav">
+      <button onclick="tapNav(-1)">◀ 前</button>
+      <button onclick="tapNav(1)">次 ▶</button>
+    </div>
+  </div>
+
+  <p class="notice">※ ブラウザの音声合成（Web Speech API）を使用します。<br>
+    初回は端末の音量を上げてからお試しください。</p>
+</div>
+
+<script>
+const nights=[
+  {n:1, hw:"Hilo",           hwRead:"Hilo",         kana:"ヒロ",                dayIdx:1,  phase:"誕生"},
+  {n:2, hw:"Hoaka",          hwRead:"Hoaka",        kana:"ホアカ",              dayIdx:2,  phase:"誕生"},
+  {n:3, hw:"Kū-kahi",        hwRead:"Ku kahi",      kana:"クーカヒ",            dayIdx:3,  phase:"誕生"},
+  {n:4, hw:"Kū-lua",         hwRead:"Ku lua",       kana:"クールア",            dayIdx:4,  phase:"成長"},
+  {n:5, hw:"Kū-kolu",        hwRead:"Ku kolu",      kana:"クーコル",            dayIdx:5,  phase:"成長"},
+  {n:6, hw:"Kū-pau",         hwRead:"Ku pau",       kana:"クーパウ",            dayIdx:6,  phase:"成長"},
+  {n:7, hw:"ʻOle-kū-kahi",   hwRead:"Ole ku kahi",  kana:"オレ・クー・カヒ",    dayIdx:7,  phase:"成長"},
+  {n:8, hw:"ʻOle-kū-lua",    hwRead:"Ole ku lua",   kana:"オレ・クー・ルア",    dayIdx:8,  phase:"成長"},
+  {n:9, hw:"ʻOle-kū-kolu",   hwRead:"Ole ku kolu",  kana:"オレ・クー・コル",    dayIdx:9,  phase:"成長"},
+  {n:10,hw:"ʻOle-pau",       hwRead:"Ole pau",      kana:"オレ・パウ",          dayIdx:10, phase:"成長"},
+  {n:11,hw:"Huna",           hwRead:"Huna",         kana:"フナ",                dayIdx:11, phase:"満ちる"},
+  {n:12,hw:"Mōhalu",         hwRead:"Mohalu",       kana:"モハル",              dayIdx:12, phase:"満ちる"},
+  {n:13,hw:"Hua",            hwRead:"Hua",          kana:"フア",                dayIdx:13, phase:"満ちる"},
+  {n:14,hw:"Akua",           hwRead:"Akua",         kana:"アクア",              dayIdx:14, phase:"満ちる"},
+  {n:15,hw:"Hoku",           hwRead:"Hoku",         kana:"ホク",                dayIdx:15, phase:"満ちる"},
+  {n:16,hw:"Māhealani",      hwRead:"Mahealani",    kana:"マヘアラニ",          dayIdx:16, phase:"満ちる"},
+  {n:17,hw:"Kulu",           hwRead:"Kulu",         kana:"クル",                dayIdx:17, phase:"欠け始め"},
+  {n:18,hw:"Lāʻau-kū-kahi",  hwRead:"Laau ku kahi", kana:"ラーアウ・クー・カヒ",dayIdx:18, phase:"欠け始め"},
+  {n:19,hw:"Lāʻau-kū-lua",   hwRead:"Laau ku lua",  kana:"ラーアウ・クー・ルア",dayIdx:19, phase:"欠け始め"},
+  {n:20,hw:"Lāʻau-pau",      hwRead:"Laau pau",     kana:"ラーアウ・パウ",      dayIdx:20, phase:"欠け始め"},
+  {n:21,hw:"ʻOle-kū-kahi",   hwRead:"Ole ku kahi",  kana:"オレ・クー・カヒ",    dayIdx:21, phase:"浄化"},
+  {n:22,hw:"ʻOle-kū-lua",    hwRead:"Ole ku lua",   kana:"オレ・クー・ルア",    dayIdx:22, phase:"浄化"},
+  {n:23,hw:"ʻOle-pau",       hwRead:"Ole pau",      kana:"オレ・パウ",          dayIdx:23, phase:"浄化"},
+  {n:24,hw:"Kāloa-kū-kahi",  hwRead:"Kaloa ku kahi",kana:"カーロア・クー・カヒ",dayIdx:24, phase:"浄化"},
+  {n:25,hw:"Kāloa-kū-lua",   hwRead:"Kaloa ku lua", kana:"カーロア・クー・ルア",dayIdx:25, phase:"浄化"},
+  {n:26,hw:"Kāloa-pau",      hwRead:"Kaloa pau",    kana:"カーロア・パウ",      dayIdx:26, phase:"浄化"},
+  {n:27,hw:"Kāne",           hwRead:"Kane",         kana:"カーネ",              dayIdx:27, phase:"再生"},
+  {n:28,hw:"Lono",           hwRead:"Lono",         kana:"ロノ",                dayIdx:28, phase:"再生"},
+  {n:29,hw:"Mauli",          hwRead:"Mauli",        kana:"マウリ",              dayIdx:29, phase:"再生"},
+  {n:30,hw:"Muku",           hwRead:"Muku",         kana:"ムク",                dayIdx:0,  phase:"再生"},
+];
+const stepConfigs={
+  1:{label:"ランダム",desc:"ランダム：30夜をシャッフルして読み上げます",rate:0.85,pause:1800},
+  2:{label:"普通",desc:"普通：ハワイ語を普通のスピードで読み上げます",rate:1.0,pause:1400},
+  3:{label:"まとめ",desc:"まとめ読み：30夜を一息で。儀式のように読みます",rate:1.1,pause:700},
+};
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let currentMode='auto',currentStep=1,isPlaying=false,stopRequested=false,tapIdx=0,practiceIdx=0;
+let _iconUid=0;
+function moonIconSVG(dayIdx,size){
+  size=size||72;_iconUid++;const id='mc'+_iconUid;const r=size/2-3;const cx=size/2,cy=size/2;
+  const DARK='#2E2A24',LIGHT='#F6CE5B';
+  const theta=(dayIdx/30)*2*Math.PI;const dx=r*(1+Math.cos(theta));const dir=dayIdx<15?1:-1;const lightCx=cx+dir*dx;
+  return`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="${DARK}"/><circle cx="${lightCx}" cy="${cy}" r="${r}" fill="${LIGHT}" clip-path="url(#${id})"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/></svg>`;
+}
+function updateDisplay(night){
+  document.getElementById('moonSvgWrap').innerHTML=moonIconSVG(night.dayIdx,72);
+  document.getElementById('nightNum').textContent=night.n;
+  document.getElementById('hawaiiName').textContent=night.hw;
+  document.getElementById('kanaName').textContent=night.kana;
+  document.getElementById('phaseLabel').textContent=night.phase;
+}
+function updateProgress(idx){
+  const pct=Math.round(((idx+1)/30)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressText').textContent=(idx+1)+' / 30';
+  document.getElementById('progressPct').textContent=pct+'%';
+}
+function resetProgress(){
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('progressText').textContent='0 / 30';
+  document.getElementById('progressPct').textContent='';
+}
+function setStepInfo(text){document.getElementById('stepInfo').textContent=text;}
+function switchMode(mode){
+  stopPlayback();currentMode=mode;
+  document.getElementById('tabAuto').classList.toggle('active',mode==='auto');
+  document.getElementById('tabPractice').classList.toggle('active',mode==='practice');
+  document.getElementById('tabTap').classList.toggle('active',mode==='tap');
+  document.getElementById('autoControls').style.display=mode==='auto'?'':'none';
+  document.getElementById('practiceControls').style.display=mode==='practice'?'':'none';
+  document.getElementById('tapControls').style.display=mode==='tap'?'':'none';
+  if(mode==='auto'){showAnswer();setStepInfo('スタートボタンを押すと読み上げが始まります。');resetProgress();document.getElementById('displayCard').classList.remove('speaking');}
+  else if(mode==='practice'){practiceIdx=0;showTapNight(practiceIdx,false);setStepInfo('ハワイ語を見ながら「読み上げる」を押して声に出して練習しましょう。');}
+  else if(mode==='tap'){tapIdx=0;showTapNight(tapIdx,true);setStepInfo('数字と月の形を見て答えを考えてから「読み上げて答えを表示」を押してください。');}
+}
+function selectStep(s){
+  stopPlayback();currentStep=s;
+  [1,2,3].forEach(i=>{document.getElementById('stepBtn'+i).classList.toggle('active',i===s);});
+  document.getElementById('speedLabel').textContent=stepConfigs[s].desc;
+  setStepInfo('スタートボタンを押すと読み上げが始まります。');resetProgress();
+}
+function speak(text,rate,lang='en-US'){return new Promise((resolve)=>{const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=rate;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u);});}
+function speakNumber(n,rate){return new Promise((resolve)=>{const u=new SpeechSynthesisUtterance(String(n));u.lang='ja-JP';u.rate=rate;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u);});}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function togglePlay(){if(isPlaying){stopPlayback();return;}startPlayback();}
+function stopPlayback(){
+  stopRequested=true;isPlaying=false;window.speechSynthesis.cancel();
+  document.getElementById('playBtn').textContent='▶ スタート';
+  document.getElementById('playBtn').className='play-btn start';
+  document.getElementById('displayCard').classList.remove('speaking');
+}
+async function startPlayback(){
+  stopRequested=false;isPlaying=true;
+  document.getElementById('playBtn').textContent='⏹ ストップ';
+  document.getElementById('playBtn').className='play-btn stop';
+  const cfg=stepConfigs[currentStep];const isRandom=(currentStep===1);
+  const queue=isRandom?shuffle(nights):nights;
+  setStepInfo('再生中...'+(isRandom?'🔀 ランダム順':'第'+currentStep+'ステップ「'+cfg.label+'」'));
+  for(let i=0;i<queue.length;i++){
+    if(stopRequested)break;const night=queue[i];updateDisplay(night);
+    const pct=Math.round(((i+1)/30)*100);
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('progressText').textContent=(i+1)+' / 30';
+    document.getElementById('progressPct').textContent=pct+'%';
+    document.getElementById('displayCard').classList.add('speaking');
+    await speakNumber(night.n,cfg.rate);if(stopRequested)break;
+    await sleep(1000);if(stopRequested)break;
+    await speak(night.hwRead,cfg.rate,'en-US');if(stopRequested)break;
+    document.getElementById('displayCard').classList.remove('speaking');
+    await sleep(cfg.pause);
+  }
+  if(!stopRequested){setStepInfo('✅ 完了！お疲れ様でした。');document.getElementById('playBtn').textContent='▶ もう一度';document.getElementById('playBtn').className='play-btn start';}
+  isPlaying=false;
+}
+function practiceNav(dir){
+  window.speechSynthesis.cancel();practiceIdx=Math.max(0,Math.min(29,practiceIdx+dir));
+  const night=nights[practiceIdx];updateDisplay(night);updateProgress(practiceIdx);showAnswer();
+  document.getElementById('practiceSpeakBtn').classList.remove('speaking');
+  document.getElementById('practiceSpeakBtn').textContent='🔊 読み上げる';
+  setStepInfo((practiceIdx+1)+'番「'+night.hw+'」を表示中。');
+}
+async function practiceSpeak(){
+  window.speechSynthesis.cancel();const night=nights[practiceIdx];
+  const btn=document.getElementById('practiceSpeakBtn');btn.classList.add('speaking');btn.textContent='🔊 読み上げ中...';
+  document.getElementById('displayCard').classList.add('speaking');
+  await speakNumber(night.n,0.9);await sleep(1000);await speak(night.hwRead,0.85,'en-US');
+  btn.classList.remove('speaking');btn.textContent='🔊 読み上げる';
+  document.getElementById('displayCard').classList.remove('speaking');
+  setStepInfo('✅ '+night.n+'番「'+night.hw+'（'+night.kana+'）」');
+  if(practiceIdx<29){practiceIdx++;const next=nights[practiceIdx];updateDisplay(next);updateProgress(practiceIdx);showAnswer();setStepInfo((practiceIdx+1)+'番「'+next.hw+'」へ移動しました。');}
+}
+function hideAnswer(){document.getElementById('hawaiiName').classList.add('hidden');document.getElementById('kanaName').classList.add('hidden');}
+function showAnswer(){document.getElementById('hawaiiName').classList.remove('hidden');document.getElementById('kanaName').classList.remove('hidden');}
+function showTapNight(idx,hideNames){const night=nights[idx];updateDisplay(night);updateProgress(idx);if(hideNames)hideAnswer();}
+function tapNav(dir){
+  window.speechSynthesis.cancel();tapIdx=Math.max(0,Math.min(29,tapIdx+dir));
+  showTapNight(tapIdx,false);
+  document.getElementById('tapSpeakBtn').classList.remove('speaking');
+  document.getElementById('tapSpeakBtn').textContent='🔊 読み上げて答えを表示';
+  setStepInfo((tapIdx+1)+'夜目を表示中。');
+}
+async function tapSpeak(){
+  window.speechSynthesis.cancel();const night=nights[tapIdx];
+  const btn=document.getElementById('tapSpeakBtn');btn.classList.add('speaking');btn.textContent='🔊 読み上げ中...';
+  document.getElementById('displayCard').classList.add('speaking');showAnswer();
+  await speakNumber(night.n,0.9);await sleep(1000);await speak(night.hwRead,0.85,'en-US');
+  btn.classList.remove('speaking');btn.textContent='🔊 読み上げて答えを表示';
+  document.getElementById('displayCard').classList.remove('speaking');
+  setStepInfo('✅ '+night.n+'番「'+night.hw+'（'+night.kana+'）」');
+  if(tapIdx<29){tapIdx++;showTapNight(tapIdx,true);}
+}
+updateDisplay(nights[0]);showAnswer();
+document.getElementById('speedLabel').textContent=stepConfigs[1].desc;
+</script>
+</body>
+</html>
