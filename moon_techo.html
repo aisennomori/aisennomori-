@@ -183,9 +183,8 @@
   .day-cell .marker{ font-size:2.6cqw; line-height:1.2; margin-top:1px; }
   .day-cell.today .date-info,
   .day-cell.today .dow-info{ color:#C0392B; }
-  .day-cell.no-date .moon-icon,
-  .day-cell.no-date .haw-name,
-  .day-cell.no-date .moon-num{ opacity:.35; }
+  .day-cell.no-date,
+  .day-card.no-date{ background:#f7f4ef; }
 
   /* ======================================
      案②：カード表示
@@ -570,13 +569,13 @@
         const cell=document.createElement('div');
         if(!di){
           cell.className='day-cell no-date';
-          cell.innerHTML='<span class="moon-icon">'+md.icon+'</span>'+
-            '<span class="haw-name">'+md.name+'</span>'+
-            '<span class="kana">'+md.kana+'</span>'+
-            '<span class="moon-num">'+n+'</span>'+
-            '<span class="date-info" style="visibility:hidden">-/-</span>'+
+          cell.innerHTML='<span class="moon-icon" style="opacity:.25">'+md.icon+'</span>'+
+            '<span class="haw-name" style="opacity:.3">'+md.name+'</span>'+
+            '<span class="kana" style="opacity:.3">'+md.kana+'</span>'+
+            '<span class="moon-num" style="opacity:.3">'+n+'</span>'+
+            '<span class="date-info" style="color:var(--ink-soft);font-weight:400;font-size:1.6cqw;">—</span>'+
             '<span class="dow-info" style="visibility:hidden">(-)</span>'+
-            '<span class="marker"> </span>';
+            '<span class="marker">&nbsp;</span>';
         } else {
           cell.className='day-cell'+(di.isToday?' today':'');
           const mk=markerForN(n);
@@ -620,14 +619,14 @@
         const card=document.createElement('div');
         if(!di){
           card.className='day-card no-date';
-          card.innerHTML='<span class="moon-icon">'+md.icon+'</span>'+
-            '<span class="moon-num">'+n+'</span>'+
-            '<span class="haw-name">'+md.name+'</span>'+
-            '<span class="kana">'+md.kana+'</span>'+
+          card.innerHTML='<span class="moon-icon" style="opacity:.25">'+md.icon+'</span>'+
+            '<span class="moon-num" style="opacity:.3">'+n+'</span>'+
+            '<span class="haw-name" style="opacity:.3">'+md.name+'</span>'+
+            '<span class="kana" style="opacity:.3">'+md.kana+'</span>'+
             '<div class="divider"></div>'+
-            '<span class="date-info" style="visibility:hidden">-/-</span>'+
+            '<span class="date-info" style="color:var(--ink-soft);font-weight:400;font-size:2.2cqw;">—</span>'+
             '<span class="dow-info" style="visibility:hidden">(-)</span>'+
-            '<span class="marker"> </span>';
+            '<span class="marker">&nbsp;</span>';
         } else {
           card.className='day-card'+(di.isToday?' today':'');
           const mk=markerForN(n);
