@@ -473,29 +473,53 @@
   }
   function jdeToUTC(jde){return new Date((jde-2440587.5)*86400000);}
   function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
+
+  // 新月リスト生成（JST日付 + JST時刻をセットで保持）
+  // バグ修正：kForの範囲を広げ、年をまたぐ新月を確実に取得
   function nmDays(year){
-    const days=[];
-    for(let k=kFor(year,1)-3;k<=kFor(year,12)+3;k++){
+    const seen=new Set(), list=[];
+    for(let k=kFor(year,1)-4;k<=kFor(year,12)+4;k++){
       const utc=jdeToUTC(newMoonJDE(k));
       const jst=new Date(utc.getTime()+9*3600*1000);
-      days.push(Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate()));
+      const dateMs=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+      const key=dateMs+'';
+      if(!seen.has(key)){
+        seen.add(key);
+        list.push({ms:dateMs, jstHour:jst.getUTCHours()});
+      }
     }
-    days.sort((a,b)=>a-b);
-    return days.filter((d,i)=>i===0||d!==days[i-1]);
+    list.sort((a,b)=>a.ms-b.ms);
+    return list;
   }
   const nmCache={};
   function getNM(y){if(!nmCache[y])nmCache[y]=nmDays(y);return nmCache[y];}
   function nmNear(y){return getNM(y-1).concat(getNM(y)).concat(getNM(y+1));}
+
+  // ============================================================
+  // 先生方式：Hilo計算
+  // 新月のJST時刻が 06:00 より前 → Hilo=新月当日
+  // 新月のJST時刻が 06:00 以降  → Hilo=新月翌日
+  // ============================================================
+  function getHiloMs(nmObj){
+    return nmObj.jstHour < 6 ? nmObj.ms : nmObj.ms + 86400000;
+  }
   function findCycle(y,m){
     const s=Date.UTC(y,m-1,1),list=nmNear(y);
-    for(let i=0;i<list.length-1;i++){if(list[i]+86400000>=s)return{nm:list[i],nextNm:list[i+1]};}
+    for(let i=0;i<list.length-1;i++){
+      if(list[i].ms+86400000>=s) return{nm:list[i],nextNm:list[i+1]};
+    }
     return null;
   }
-  function adjCycle(nm,nextNm,dir){
-    const list=nmNear(new Date(nm).getUTCFullYear()),idx=list.indexOf(nm);
-    if(idx===-1)return null;
-    if(dir>0){if(idx+2>=list.length)return null;return{nm:list[idx+1],nextNm:list[idx+2]};}
-    else{if(idx-1<0)return null;return{nm:list[idx-1],nextNm:list[idx]};}
+  function adjCycle(nmObj,nextNmObj,dir){
+    // HiloのUTC日付から年月を取得して±1月のサイクルを探す
+    const hiloMs=getHiloMs(nmObj);
+    const hiloDate=new Date(hiloMs);
+    let y=hiloDate.getUTCFullYear();
+    let m=hiloDate.getUTCMonth()+1; // 1-12
+    m+=dir;
+    if(m>12){m=1;y++;}
+    else if(m<1){m=12;y--;}
+    return findCycle(y,m);
   }
   function fmtDate(ms){const d=new Date(ms);return d.getUTCFullYear()+'年'+(d.getUTCMonth()+1)+'月'+d.getUTCDate()+'日';}
   function fmtShort(ms){const d=new Date(ms);return(d.getUTCMonth()+1)+'/'+d.getUTCDate();}
@@ -537,14 +561,46 @@
   // ============================================================
   // Rendering
   // ============================================================
-  function buildDayMap(nm, lunLen){
+  function buildDayMap(nmObj, nextNmObj){
     const todayMs=Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
     const dayMap={};
-    for(let i=1;i<=lunLen;i++){
-      const n=(i===lunLen)?30:i;
-      const ms=nm+i*86400000;
-      dayMap[n]={ms,isToday:sameUTC(ms,todayMs)};
+    const hiloMs=getHiloMs(nmObj);
+    const nextHiloMs=getHiloMs(nextNmObj);
+    const interval=Math.round((nextNmObj.ms-nmObj.ms)/86400000);
+    // Mauli有無はHilo間隔で判定（新月間隔ではなくHilo間隔）
+    const hiloInterval=Math.round((nextHiloMs-hiloMs)/86400000);
+    const hasMauli=(hiloInterval===30);
+    // ══════════════════════════════════════════════
+    // 先生方式 確定ルール
+    //
+    // ハワイ暦の構造：
+    //   Muku(30)の翌夜が次サイクルのHilo(1)
+    //   → Muku = 今サイクルHilo − 1日
+    //   → Mauli = 今サイクルHilo − 2日（30日サイクルのみ）
+    //
+    // 手帖の日付割り当て：
+    //   第1夜(Hilo) = hiloMs
+    //   第2〜28夜   = hiloMs + 1〜27日
+    //   第29夜(Mauli) = hasMauliならhiloMs-2日、なければnull(グレーアウト)
+    //   第30夜(Muku)  = hiloMs - 1日
+    //
+    // ※ 第29・30夜は日付上Hiloより前になる（ハワイ暦の正常な構造）
+    // ══════════════════════════════════════════════
+
+    // 純粋カウント：Hiloから順番に夜を割り当てる
+    // Mauliなし(29日): 第1〜28夜=順番、第29=スキップ、第30=第29の翌日
+    // Mauliあり(30日): 第1〜29夜=順番、第30=第29の翌日
+    let offset = 0;
+    for(let n=1; n<=30; n++){
+      if(n===29 && !hasMauli){
+        dayMap[29] = null; // スキップ
+      } else {
+        const ms = hiloMs + offset*86400000;
+        dayMap[n] = {ms, isToday:sameUTC(ms,todayMs)};
+        offset++;
+      }
     }
+
     return dayMap;
   }
 
@@ -651,14 +707,19 @@
   function renderCycle(cycle){
     displayedCycle=cycle;
     const{nm,nextNm}=cycle;
-    const lunLen=Math.round((nextNm-nm)/86400000);
+    const hiloMs=getHiloMs(nm);
+    const interval=Math.round((nextNm.ms-nm.ms)/86400000);
+    const hasMauli=(interval===30);
+    // タイトル終端 = 次Hilo − 1日（常に）
+    const nextHiloMs = getHiloMs(nextNm);
+    const titleEndMs = nextHiloMs - 86400000;
     document.getElementById('calTitle').textContent=
-      fmtDate(nm+86400000)+'〜'+fmtDate(nextNm)+'（1サイクル）';
+      fmtDate(hiloMs)+'〜'+fmtDate(titleEndMs)+'（1サイクル）';
     document.getElementById('periodBand').textContent=
-      fmtShort(nm+86400000)+' 〜 '+fmtShort(nextNm)+
-      '（'+new Date(nm+86400000).getUTCFullYear()+'年）';
+      fmtShort(hiloMs)+' 〜 '+fmtShort(titleEndMs)+
+      '（'+new Date(hiloMs).getUTCFullYear()+'年）'+(hasMauli?' ／ Mauli あり':'');
 
-    const dayMap=buildDayMap(nm,lunLen);
+    const dayMap=buildDayMap(nm,nextNm);
     const inner=document.getElementById('sheetInner');
     const pb=document.getElementById('periodBand');
     inner.innerHTML='';
@@ -691,7 +752,7 @@
   });
   document.getElementById('nextBtn').addEventListener('click',function(){
     if(!displayedCycle)return;
-    const n=adjCycle(displayedCycle.nm,displayedCycle.nextNm,1);if(n)renderCycle(n);
+    const nx=adjCycle(displayedCycle.nm,displayedCycle.nextNm,1);if(nx)renderCycle(nx);
   });
   document.getElementById('btnGrid').addEventListener('click',()=>setMode('grid'));
   document.getElementById('btnCard').addEventListener('click',()=>setMode('card'));
