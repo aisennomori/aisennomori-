@@ -6,575 +6,352 @@
 <title>ハワイアン・ムーン・カレンダー | 愛泉の杜</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
-
   :root{
-    --bg:#FBF6EC;
-    --card:#FFFFFF;
-    --ink:#3A322A;
-    --ink-soft:#9A8F80;
-    --line:#EAE1D2;
-    --waxing:#4F9D94;
-    --full:#E2A23C;
-    --waning:#8FAE7E;
-    --moon-dark:#2E2A24;
-    --moon-light:#F6CE5B;
-    --font-display:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif;
-    --font-body:'Zen Kaku Gothic New','Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+    --bg:#FBF6EC; --card:#FFF; --ink:#3A322A; --soft:#9A8F80;
+    --line:#EAE1D2; --wax:#4F9D94; --full:#E2A23C; --wan:#8FAE7E;
+    --fd:'Shippori Mincho','Yu Mincho',serif;
+    --fb:'Zen Kaku Gothic New','Yu Gothic',sans-serif;
   }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--fb);}
 
-  *{ box-sizing:border-box; }
+  /* ヘッダー */
+  .hdr{background:linear-gradient(180deg,#3E3A33,#4A4339);color:#F7F1E4;
+    padding:18px 16px 20px;border-radius:0 0 20px 20px;}
+  .hdr h1{font-family:var(--fd);font-size:1.2rem;font-weight:700;letter-spacing:.04em;margin-bottom:2px;}
+  .hdr .sub{font-size:.7rem;color:#CFC4AE;letter-spacing:.08em;}
 
-  html,body{
-    margin:0; padding:0;
-    background:var(--bg);
-    color:var(--ink);
-    font-family:var(--font-body);
-  }
+  /* 今日 */
+  .today-bar{margin-top:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+  .today-icon{font-size:1.8rem;line-height:1;}
+  .today-lbl{font-size:.64rem;color:#CFC4AE;letter-spacing:.07em;}
+  .today-nm{font-family:var(--fd);font-weight:700;font-size:.9rem;color:#FBF6EC;}
+  .today-nm .kana{font-weight:400;font-size:.72rem;color:#D8CDB8;margin-left:5px;}
 
-  .page{
-    max-width:480px;
-    margin:0 auto;
-    padding:0 0 40px;
-    min-height:100vh;
-  }
+  /* ナビ */
+  .nav{display:flex;align-items:center;gap:8px;margin:14px 12px 10px;}
+  .nbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);font-size:1.1rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;}
+  .nbtn:active{background:var(--line);}
+  .ntitle{flex:1;text-align:center;font-family:var(--fd);font-weight:700;
+    font-size:1.1rem;letter-spacing:.04em;}
 
-  header.app-header{
-    background:linear-gradient(180deg,#3E3A33 0%,#4A4339 100%);
-    color:#F7F1E4;
-    padding:22px 20px 26px;
-    border-radius:0 0 22px 22px;
-  }
-  header.app-header h1{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:1.35rem;
-    letter-spacing:.04em;
-    margin:0 0 2px;
-  }
-  header.app-header .subtitle{
-    font-size:.75rem;
-    color:#CFC4AE;
-    letter-spacing:.08em;
-    margin:0;
-  }
+  /* カレンダー枠 */
+  .cal-wrap{margin:0 12px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;overflow:hidden;}
 
-  .today-widget{
-    margin-top:16px;
-    background:rgba(255,255,255,.06);
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:14px;
-    padding:12px 14px;
-    display:grid;
-    grid-template-columns:48px 1fr;
-    gap:12px;
-    align-items:center;
-  }
-  .today-widget .label{
-    font-size:.68rem;
-    color:#CFC4AE;
-    letter-spacing:.1em;
-    margin-bottom:2px;
-  }
-  .today-widget .name-line{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:1rem;
-    color:#FBF6EC;
-  }
-  .today-widget .name-line .kana{
-    font-weight:400;
-    font-size:.78rem;
-    color:#D8CDB8;
-    margin-left:6px;
-  }
-  .today-widget .moon-wrap svg{ display:block; }
+  /* 曜日行 */
+  .dow-row{display:grid;grid-template-columns:repeat(7,1fr);
+    border-bottom:2px solid var(--line);}
+  .dc{text-align:center;font-size:.68rem;font-weight:700;padding:8px 0;color:var(--soft);}
+  .dc.s{color:#C25450;} .dc.sa{color:#4A6FA5;}
 
-  .controls{
-    margin:18px 16px 4px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:14px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
-  .controls .field{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
-  .controls label{
-    font-size:.7rem;
-    color:var(--ink-soft);
-    letter-spacing:.06em;
-  }
-  .controls select{
-    font-family:var(--font-body);
-    font-size:.95rem;
-    color:var(--ink);
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:7px 10px;
-    background:#FCFAF5;
-  }
-  .controls button{
-    margin-left:auto;
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:.9rem;
-    color:#FBF6EC;
-    background:var(--ink);
-    border:none;
-    border-radius:10px;
-    padding:10px 18px;
-    cursor:pointer;
-    letter-spacing:.05em;
-  }
-  .controls button:active{ opacity:.85; }
+  /* グリッド */
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);}
 
-  .cal-title{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:1rem;
-    color:var(--ink);
-    margin:22px 16px 8px;
-    padding-bottom:6px;
-    border-bottom:2px solid var(--line);
-  }
-  .calendar-list{
-    margin:0 16px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:14px;
-    overflow:hidden;
-  }
+  .cell{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:4px 2px 5px;min-height:74px;
+    display:flex;flex-direction:column;align-items:center;gap:1px;}
+  .cell:nth-child(7n){border-right:none;}
+  .cell.empty{background:rgba(0,0,0,.018);}
+  .cell.today{background:#FFF7E2;}
 
-  .day-card{
-    position:relative;
-    display:grid;
-    grid-template-columns:46px 38px 1fr;
-    gap:0 12px;
-    align-items:center;
-    padding:9px 14px 9px 18px;
-    border-bottom:1px solid var(--line);
-  }
-  .day-card:last-child{ border-bottom:none; }
-  .day-card::before{
-    content:'';
-    position:absolute;
-    left:0; top:0; bottom:0;
-    width:4px;
-    background:var(--phase-color);
-  }
-  .day-card.today{ background:#FFF7E2; }
+  /* 夜グループ上線 */
+  .cell[data-g="wax"]{border-top:2.5px solid var(--wax);}
+  .cell[data-g="full"]{border-top:2.5px solid var(--full);}
+  .cell[data-g="wan"]{border-top:2.5px solid var(--wan);}
 
-  .date-block{ text-align:center; }
-  .date-num{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:1.3rem;
-    line-height:1;
-    color:var(--ink);
-  }
-  .date-dow{
-    font-size:.66rem;
-    color:var(--ink-soft);
-    margin-top:2px;
-  }
-  .date-dow.sun{ color:#C25450; }
-  .date-dow.sat{ color:#4A6FA5; }
+  .dnum{font-family:var(--fd);font-weight:700;font-size:.9rem;line-height:1.3;
+    width:100%;text-align:center;}
+  .dnum.s{color:#C25450;} .dnum.sa{color:#4A6FA5;}
+  .dicon{font-size:1.4rem;line-height:1;}
+  .dnight{font-size:.58rem;color:var(--soft);font-weight:700;}
+  .dname{font-size:.54rem;color:var(--soft);text-align:center;
+    white-space:nowrap;overflow:hidden;max-width:100%;}
+  .dmark{font-size:.85rem;line-height:1;}
 
-  .moon-wrap{ display:flex; justify-content:center; }
+  /* 凡例 */
+  .leg{display:flex;gap:12px;margin:10px 14px 6px;font-size:.67rem;
+    color:var(--soft);flex-wrap:wrap;}
+  .leg2{margin-top:4px;}
+  .leg span{display:inline-flex;align-items:center;gap:5px;}
+  .leg i{display:inline-block;width:10px;height:10px;border-radius:2px;}
+  .lw{background:var(--wax);} .lf{background:var(--full);} .ln{background:var(--wan);}
 
-  .info-block{ min-width:0; }
-  .info-block .name-line{
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:.95rem;
-    color:var(--ink);
-  }
-  .info-block .name-line .num{
-    color:var(--ink-soft);
-    font-weight:400;
-    margin-right:3px;
-  }
-  .info-block .name-line .kana{
-    font-weight:400;
-    font-size:.76rem;
-    color:var(--ink-soft);
-    margin-left:6px;
-  }
-
-  .legend{
-    display:flex;
-    gap:14px;
-    margin:14px 16px 0;
-    font-size:.7rem;
-    color:var(--ink-soft);
-  }
-  .legend span{ display:inline-flex; align-items:center; gap:5px; }
-  .legend i{
-    display:inline-block; width:10px; height:10px; border-radius:2px;
-  }
-  .legend .i-wax{ background:var(--waxing); }
-  .legend .i-full{ background:var(--full); }
-  .legend .i-wan{ background:var(--waning); }
-
-  .month-block{ margin-bottom:6px; }
-
-  .print-section{
-    margin:22px 16px 0;
-  }
-  .print-section button{
-    width:100%;
-    font-family:var(--font-display);
-    font-weight:700;
-    font-size:1rem;
-    letter-spacing:.06em;
-    color:#FBF6EC;
-    background:var(--ink);
-    border:none;
-    border-radius:12px;
-    padding:14px;
-    cursor:pointer;
-  }
-  .print-section button:active{ opacity:.85; }
-  .print-hint{
-    text-align:center;
-    font-size:.7rem;
-    color:var(--ink-soft);
-    margin-top:8px;
-  }
-
+  /* 印刷 */
+  .pbtn{display:block;width:calc(100% - 24px);margin:14px 12px 0;
+    font-family:var(--fd);font-weight:700;font-size:.9rem;letter-spacing:.05em;
+    color:#FBF6EC;background:var(--ink);border:none;border-radius:12px;
+    padding:13px;cursor:pointer;text-align:center;}
+  .pbtn:active{opacity:.85;}
+  .phint{text-align:center;font-size:.67rem;color:var(--soft);margin:6px 0 24px;}
   @media print{
-    body{ background:#fff; }
-    header.app-header{
-      background:none; color:var(--ink); border-radius:0; padding:0 0 10px;
-    }
-    .today-widget{ display:none; }
-    .controls{ display:none; }
-    .legend{ display:none; }
-    .print-section{ display:none; }
-    .cal-title{ margin:10px 0 6px; }
-    .month-block{ break-inside:avoid-page; }
-    .calendar-list{ border:none; border-radius:0; margin:0; }
-    .page{ max-width:100%; padding:0; }
-    .day-card{ padding:5px 4px 5px 10px; break-inside:avoid; }
-    .date-num{ font-size:1.05rem; }
+    .hdr{background:none;color:var(--ink);border-radius:0;}
+    .today-bar,.nav,.leg,.pbtn,.phint{display:none;}
+    .cal-wrap{border:none;border-radius:0;margin:0;}
   }
 </style>
 </head>
 <body>
-<div class="page">
-
-  <header class="app-header">
-    <h1>ハワイアン・ムーン・カレンダー</h1>
-    <p class="subtitle">愛泉の杜 ｰ ムーン手帖</p>
-
-    <div class="today-widget">
-      <div class="moon-wrap" id="todayMoon"></div>
-      <div>
-        <div class="label" id="todayLabel"></div>
-        <div class="name-line" id="todayName"></div>
-      </div>
+<header class="hdr">
+  <h1>🌙 ハワイアン・ムーン・カレンダー</h1>
+  <p class="sub">愛泉の杜 ─ Spirit Tools</p>
+  <div class="today-bar">
+    <div class="today-icon" id="tIcon">🌕</div>
+    <div>
+      <div class="today-lbl" id="tLbl">今日の月</div>
+      <div class="today-nm" id="tNm">─</div>
     </div>
-  </header>
-
-  <section class="controls">
-    <div class="field">
-      <label for="yearInput">西暦年</label>
-      <select id="yearInput" required></select>
-    </div>
-    <div class="field">
-      <label for="monthInput">月</label>
-      <select id="monthInput" required>
-        <option value="1">1月</option>
-        <option value="2">2月</option>
-        <option value="3">3月</option>
-        <option value="4">4月</option>
-        <option value="5">5月</option>
-        <option value="6">6月</option>
-        <option value="7">7月</option>
-        <option value="8">8月</option>
-        <option value="9">9月</option>
-        <option value="10">10月</option>
-        <option value="11">11月</option>
-        <option value="12">12月</option>
-      </select>
-    </div>
-    <button id="generateBtn" type="button">表示する</button>
-  </section>
-
-  <div class="legend">
-    <span><i class="i-wax"></i>Ho'onui(満ちる)</span>
-    <span><i class="i-full"></i>Poepoe(満月期)</span>
-    <span><i class="i-wan"></i>Ho'emi(欠ける)</span>
   </div>
+</header>
 
-  <div id="monthsContainer"></div>
-
-  <section class="print-section">
-    <button id="printBtn" type="button">PDFとして印刷</button>
-    <p class="print-hint">印刷ダイアログで「PDFに保存」を選ぶとPDF化できます</p>
-  </section>
-
+<div class="nav">
+  <button class="nbtn" id="prevBtn">←</button>
+  <div class="ntitle" id="navTitle">─</div>
+  <button class="nbtn" id="nextBtn">→</button>
 </div>
 
+<div class="cal-wrap">
+  <div class="dow-row">
+    <div class="dc s">日</div>
+    <div class="dc">月</div><div class="dc">火</div>
+    <div class="dc">水</div><div class="dc">木</div>
+    <div class="dc">金</div>
+    <div class="dc sa">土</div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="leg">
+  <span><i class="lw"></i>Ho'onui 満ちる（1〜10）</span>
+  <span><i class="lf"></i>Poepoe 満月期（11〜20）</span>
+  <span><i class="ln"></i>Ho'emi 欠ける（21〜30）</span>
+</div>
+<div class="leg leg2">
+  <span>🔵 新しい事を始める</span>
+  <span>❤️ 休息期</span>
+  <span>🟢 食物パワー</span>
+  <span>🩵 浄化期</span>
+</div>
+
+<button class="pbtn" id="pBtn">📄 PDFとして印刷</button>
+<p class="phint">印刷ダイアログで「PDFに保存」を選ぶとPDF化できます</p>
+
 <script>
-  const dowNames = ['日','月','火','水','木','金','土'];
+const MD=[null,
+  {n:1, name:'Hilo',         kana:'ヒロ',          icon:'🌑',g:'wax'},
+  {n:2, name:'Hoaka',        kana:'ホアカ',         icon:'🌒',g:'wax'},
+  {n:3, name:'Ku-kahi',      kana:'クーカヒ',       icon:'🌒',g:'wax'},
+  {n:4, name:'Ku-lua',       kana:'クールア',        icon:'🌒',g:'wax'},
+  {n:5, name:'Ku-kolu',      kana:'クーコル',        icon:'🌓',g:'wax'},
+  {n:6, name:'Ku-pau',       kana:'クーパウ',        icon:'🌓',g:'wax'},
+  {n:7, name:'Ole-ku-kahi',  kana:'オレクーカヒ',    icon:'🌔',g:'wax'},
+  {n:8, name:'Ole-ku-lua',   kana:'オレクールア',    icon:'🌔',g:'wax'},
+  {n:9, name:'Ole-ku-kolu',  kana:'オレクーコル',    icon:'🌔',g:'wax'},
+  {n:10,name:'Ole-pau',      kana:'オレパウ',        icon:'🌔',g:'wax'},
+  {n:11,name:'Huna',         kana:'フナ',           icon:'🌔',g:'full'},
+  {n:12,name:'Mohalu',       kana:'モーハル',        icon:'🌕',g:'full'},
+  {n:13,name:'Hua',          kana:'ファア',          icon:'🌕',g:'full'},
+  {n:14,name:'Akua',         kana:'アクア',          icon:'🌕',g:'full'},
+  {n:15,name:'Hoku',         kana:'ホク',           icon:'🌕',g:'full'},
+  {n:16,name:'Mahealani',    kana:'マヘアラニ',      icon:'🌕',g:'full'},
+  {n:17,name:'Kulu',         kana:'クル',           icon:'🌖',g:'full'},
+  {n:18,name:'Laau-ku-kahi', kana:'ラーアウクーカヒ',icon:'🌖',g:'full'},
+  {n:19,name:'Laau-ku-lua',  kana:'ラーアウクールア',icon:'🌗',g:'full'},
+  {n:20,name:'Laau-pau',     kana:'ラーアウパウ',    icon:'🌗',g:'full'},
+  {n:21,name:'Ole-ku-kahi',  kana:'オレクーカヒ',    icon:'🌗',g:'wan'},
+  {n:22,name:'Ole-ku-lua',   kana:'オレクールア',    icon:'🌗',g:'wan'},
+  {n:23,name:'Ole-pau',      kana:'オレパウ',        icon:'🌘',g:'wan'},
+  {n:24,name:'Kaloa-ku-kahi',kana:'カーロアクーカヒ',icon:'🌘',g:'wan'},
+  {n:25,name:'Kaloa-ku-lua', kana:'カーロアクールア',icon:'🌘',g:'wan'},
+  {n:26,name:'Kaloa-pau',    kana:'カーロアパウ',    icon:'🌘',g:'wan'},
+  {n:27,name:'Kane',         kana:'カーネ',          icon:'🌘',g:'wan'},
+  {n:28,name:'Lono',         kana:'ロノ',           icon:'🌑',g:'wan'},
+  {n:29,name:'Mauli',        kana:'マウリ',          icon:'🌑',g:'wan'},
+  {n:30,name:'Muku',         kana:'ムク',           icon:'🌑',g:'wan'},
+];
 
-  const moonData = [
-    null,
-    {n:1,  name:"Hilo",          kana:"ヒロ"},
-    {n:2,  name:"Hoaka",         kana:"ホアカ"},
-    {n:3,  name:"Kū-kahi",       kana:"クーカヒ"},
-    {n:4,  name:"Kū-lua",        kana:"クールア"},
-    {n:5,  name:"Kū-kolu",       kana:"クーコル"},
-    {n:6,  name:"Kū-pau",        kana:"クーパウ"},
-    {n:7,  name:"ʻOle-kū-kahi",  kana:"オレクーカヒ"},
-    {n:8,  name:"ʻOle-kū-lua",   kana:"オレクールア"},
-    {n:9,  name:"ʻOle-kū-kolu",  kana:"オレクーコル"},
-    {n:10, name:"ʻOle-pau",      kana:"オレパウ"},
-    {n:11, name:"Huna",          kana:"フナ"},
-    {n:12, name:"Mōhalu",        kana:"モーハル"},
-    {n:13, name:"Hua",           kana:"フア"},
-    {n:14, name:"Akua",          kana:"アクア"},
-    {n:15, name:"Hoku",          kana:"ホク"},
-    {n:16, name:"Māhealani",     kana:"マヘアラニ"},
-    {n:17, name:"Kulu",          kana:"クル"},
-    {n:18, name:"Lāʻau-kū-kahi", kana:"ラーアウクーカヒ"},
-    {n:19, name:"Lāʻau-kū-lua",  kana:"ラーアウクールア"},
-    {n:20, name:"Lāʻau-kū-kolu", kana:"ラーアウクーコル"},
-    {n:21, name:"ʻOle-kū-kahi",  kana:"オレクーカヒ"},
-    {n:22, name:"ʻOle-kū-lua",   kana:"オレクールア"},
-    {n:23, name:"ʻOle-pau",      kana:"オレパウ"},
-    {n:24, name:"Kāloa-kū-kahi", kana:"カーロアクーカヒ"},
-    {n:25, name:"Kāloa-kū-lua",  kana:"カーロアクールア"},
-    {n:26, name:"Kāloa-pau",     kana:"カーロアパウ"},
-    {n:27, name:"Kāne",          kana:"カーネ"},
-    {n:28, name:"Lono",          kana:"ロノ"},
-    {n:29, name:"Mauli",         kana:"マウリ"},
-    {n:30, name:"Muku",          kana:"ムク"},
-  ];
-
-  let iconUid = 0;
-
-    // ── 天文計算（Meeus）─────────────────────────────────────────
-  function newMoonJDE(k){
-    const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
-    const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
-    const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
-    const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
-    const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
-    const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
-    const s=Math.sin,E2=E*E;
-    return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
-      -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
-      +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
-      -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
-      -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
-      -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
-      +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
-      +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
-      -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
+// ── 天文計算 ─────────────────────────────────────────────────
+const D=86400000;
+function newMoonJDE(k){
+  const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
+  const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
+  const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+  const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+  const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+  const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+  const s=Math.sin,E2=E*E;
+  return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+    -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+    +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+    -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+    -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+    -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+    +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+    +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+    -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
+}
+function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
+const nmCache={};
+function getNM(y){
+  if(nmCache[y]) return nmCache[y];
+  const seen=new Set(),list=[];
+  for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
+    const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
+    const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+    if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
   }
-  const D=86400000;
-  function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
+  return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
+}
+function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
+function getHiloMs(nm){return nm.jstHour<6?nm.ms:nm.ms+D;}
 
-  // ── 新月リスト（JST日付＋時刻） ──────────────────────────────
-  const nmCache={};
-  function getNM(y){
-    if(nmCache[y]) return nmCache[y];
-    const seen=new Set(),list=[];
-    for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
-      const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
-      const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
-      if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
-    }
-    return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
-  }
-  function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
-
-  // ── ハワイアンムーン コアロジック ────────────────────────────
-  // Hilo = 新月JST時刻が06:00前→当日、以降→翌日
-  function getHiloMs(nm){return nm.jstHour<6 ? nm.ms : nm.ms+D;}
-
-  // 指定年月を含むサイクルを返す
-  function findCycle(y,m){
-    const s=Date.UTC(y,m-1,1),list=nmNear(y);
-    for(let i=0;i<list.length-1;i++){
-      if(list[i].ms+D>=s) return{nm:list[i],nextNm:list[i+1]};
-    }
+function getMoonNight(year,month,day){
+  const target=Date.UTC(year,month-1,day);
+  const list=nmNear(year);
+  let nmIdx=-1;
+  for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
+  if(nmIdx<0||nmIdx>=list.length-1) return null;
+  const nm=list[nmIdx],nextNm=list[nmIdx+1];
+  const hiloMs=getHiloMs(nm),nextHiloMs=getHiloMs(nextNm);
+  const hasMauli=Math.round((nextHiloMs-hiloMs)/D)===30;
+  if(target<hiloMs){
+    const diff=Math.round((hiloMs-target)/D);
+    if(diff===1) return 30;
+    if(diff===2&&hasMauli) return 29;
     return null;
   }
-
-  // 指定日の夜番号(1-30)を返す
-  // Mauli有無はHilo間隔で判定、純粋カウント（逆算なし）
-  function getMoonNight(year,month,day){
-    const target=Date.UTC(year,month-1,day);
-    const list=nmNear(year);
-    let nmIdx=-1;
-    for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
-    if(nmIdx<0||nmIdx>=list.length-1) return null;
-    const nm=list[nmIdx],nextNm=list[nmIdx+1];
-    const hiloMs=getHiloMs(nm);
-    const nextHiloMs=getHiloMs(nextNm);
-    const hasMauli=Math.round((nextHiloMs-hiloMs)/D)===30;
-    // Hiloより前の日はMuku(30)またはMauli(29)
-    if(target<hiloMs){
-      const diff=Math.round((hiloMs-target)/D);
-      if(diff===1) return 30; // Muku
-      if(diff===2&&hasMauli) return 29; // Mauli
-      return null;
-    }
-    // Hilo以降は純粋カウント
-    let offset=Math.round((target-hiloMs)/D);
-    if(!hasMauli&&offset>=28) offset++; // 第29夜スキップ
-    const n=offset+1;
-    return(n>=1&&n<=30)?n:null;
-  }
-
-
-  
-// getMoonNight互換ラッパー（moonIconSVG用にdayIdx/lunLenを提供）
-function getMoonNightInfo(year, month, day){
-  const n = getMoonNight(year, month, day) || 1;
-  const target = Date.UTC(year, month-1, day);
-  const list = nmNear(year);
-  let nmIdx = -1;
-  for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
-  if(nmIdx<0||nmIdx>=list.length-1) return{n,dayIdx:n-1,lunLen:30};
-  const nm=list[nmIdx],nextNm=list[nmIdx+1];
-  const lunLen=Math.round((nextNm.ms-nm.ms)/D);
-  const dayIdx=Math.round((target-nm.ms)/D);
-  return{n,dayIdx,lunLen};
+  let offset=Math.round((target-hiloMs)/D);
+  if(!hasMauli&&offset>=28) offset++;
+  const n=offset+1;
+  return(n>=1&&n<=30)?n:null;
 }
-  function moonIconSVG(dayIdx, lunLen, size){
-    size = size || 30;
-    iconUid++;
-    const r = size/2 - 1.5;
-    const cx = size/2, cy = size/2;
-    const theta = (dayIdx/lunLen) * 2 * Math.PI;
-    const dx = r * (1 + Math.cos(theta));
-    const dir = dayIdx < lunLen/2 ? 1 : -1;
-    const lightCx = cx + dir*dx;
-    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true">'
-      + '<defs><clipPath id="mclip'+iconUid+'"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/></clipPath></defs>'
-      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--moon-dark)"/>'
-      + '<circle cx="'+lightCx+'" cy="'+cy+'" r="'+r+'" fill="var(--moon-light)" clip-path="url(#mclip'+iconUid+')"/>'
-      + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>'
-      + '</svg>';
+
+
+// マーカー（moon_techoと同じ）
+function markerForN(n){
+  if(n>=1&&n<=3)  return'🔵';
+  if(n>=7&&n<=10) return'❤️';
+  if(n>=18&&n<=20)return'🟢';
+  if(n>=23&&n<=26)return'🩵';
+  return'';
+}
+// ── 状態 ─────────────────────────────────────────────────────
+let cY,cM;
+
+// ── 今日ウィジェット ─────────────────────────────────────────
+(function(){
+  const now=new Date();
+  const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
+  const n=getMoonNight(y,m,d);
+  const md=n?MD[n]:null;
+  const dow=['日','月','火','水','木','金','土'][now.getDay()];
+  document.getElementById('tLbl').textContent=`${y}年${m}月${d}日（${dow}）`;
+  if(md){
+    document.getElementById('tIcon').textContent=md.icon;
+    document.getElementById('tNm').innerHTML=
+      `第${n}夜 ${md.name}<span class="kana">${md.kana}</span>`;
+  } else {
+    document.getElementById('tNm').textContent='新月期';
+  }
+})();
+
+// ── カレンダー描画 ───────────────────────────────────────────
+function render(year,month){
+  cY=year; cM=month;
+  document.getElementById('navTitle').textContent=`${year}年 ${month}月`;
+
+  const now=new Date();
+  const todayMs=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+  const firstDow=new Date(year,month-1,1).getDay();
+  const dim=new Date(year,month,0).getDate();
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+
+  // 前月空白
+  for(let i=0;i<firstDow;i++){
+    const c=document.createElement('div');
+    c.className='cell empty';
+    grid.appendChild(c);
   }
 
-  function phaseColor(n){
-    if (n <= 10) return 'var(--waxing)';
-    if (n <= 20) return 'var(--full)';
-    return 'var(--waning)';
-  }
+  // 各日
+  for(let d=1;d<=dim;d++){
+    const ms=Date.UTC(year,month-1,d);
+    const dow=new Date(year,month-1,d).getDay();
+    const isToday=(ms===todayMs);
+    const n=getMoonNight(year,month,d);
+    const md=n?MD[n]:null;
 
-  function daysInMonth(year, month){
-    return new Date(year, month, 0).getDate();
-  }
+    const c=document.createElement('div');
+    c.className='cell'+(isToday?' today':'');
+    if(md) c.dataset.g=md.g;
 
-  function escapeHtml(str){
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
+    // 日付
+    const dn=document.createElement('div');
+    dn.className='dnum'+(dow===0?' s':dow===6?' sa':'');
+    dn.textContent=d;
+    c.appendChild(dn);
 
-  function renderTodayWidget(){
-    const now = new Date();
-    const y = now.getFullYear(), m = now.getMonth()+1, d = now.getDate();
-    const info2 = getMoonNightInfo(y, m, d);
-    const info = moonData[info2.n];
-    document.getElementById('todayMoon').innerHTML = moonIconSVG(info2.dayIdx, info2.lunLen, 44);
-    document.getElementById('todayLabel').textContent =
-      '今日 ' + y + '年' + m + '月' + d + '日(' + dowNames[now.getDay()] + ')';
-    document.getElementById('todayName').innerHTML =
-      '<span class="num">' + info.n + '.</span> ' + escapeHtml(info.name)
-      + '<span class="kana">' + info.kana + '</span>';
-  }
-
-  function populateYearSelect(){
-    const sel = document.getElementById('yearInput');
-    const current = new Date().getFullYear();
-    for (let y = current + 6; y >= 1930; y--){
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = y + '年';
-      if (y === current) opt.selected = true;
-      sel.appendChild(opt);
-    }
-  }
-
-  function buildMonthBlock(year, month){
-    const wrapper = document.createElement('div');
-    wrapper.className = 'month-block';
-
-    const title = document.createElement('h2');
-    title.className = 'cal-title';
-    title.textContent = year + '年 ' + month + '月のムーンカレンダー';
-    wrapper.appendChild(title);
-
-    const list = document.createElement('div');
-    list.className = 'calendar-list';
-
-    const dim = daysInMonth(year, month);
-    const now = new Date();
-
-    for (let d = 1; d <= dim; d++){
-      const info2 = getMoonNightInfo(year, month, d);
-      const info = moonData[info2.n];
-      const dateObj = new Date(year, month-1, d);
-      const dow = dowNames[dateObj.getDay()];
-      const isToday = (now.getFullYear() === year && now.getMonth()+1 === month && now.getDate() === d);
-
-      let dowClass = '';
-      if (dow === '日') dowClass = 'sun';
-      if (dow === '土') dowClass = 'sat';
-
-      const card = document.createElement('div');
-      card.className = 'day-card' + (isToday ? ' today' : '');
-      card.style.setProperty('--phase-color', phaseColor(info.n));
-      card.innerHTML =
-        '<div class="date-block">'
-          + '<div class="date-num">' + d + '</div>'
-          + '<div class="date-dow ' + dowClass + '">' + dow + '</div>'
-        + '</div>'
-        + '<div class="moon-wrap">' + moonIconSVG(info2.dayIdx, info2.lunLen) + '</div>'
-        + '<div class="info-block">'
-          + '<div class="name-line"><span class="num">' + info.n + '.</span> '
-            + escapeHtml(info.name) + '<span class="kana">' + info.kana + '</span></div>'
-        + '</div>';
-      list.appendChild(card);
+    if(md){
+      // 月相アイコン
+      const ic=document.createElement('div');
+      ic.className='dicon';
+      ic.textContent=md.icon;
+      c.appendChild(ic);
+      // 夜番号
+      const ni=document.createElement('div');
+      ni.className='dnight';
+      ni.textContent=`第${n}夜`;
+      c.appendChild(ni);
+      // 夜名
+      const nm=document.createElement('div');
+      nm.className='dname';
+      nm.textContent=md.name;
+      c.appendChild(nm);
+      // マーカー
+      const mk=markerForN(n);
+      if(mk){
+        const mel=document.createElement('div');
+        mel.className='dmark';
+        mel.textContent=mk;
+        c.appendChild(mel);
+      }
     }
 
-    wrapper.appendChild(list);
-    return wrapper;
+    grid.appendChild(c);
   }
 
-  function render(){
-    const year = parseInt(document.getElementById('yearInput').value, 10);
-    const month = parseInt(document.getElementById('monthInput').value, 10);
-    if (!year || !month) return;
-
-    const container = document.getElementById('monthsContainer');
-    container.innerHTML = '';
-
-    let y2 = year, m2 = month + 1;
-    if (m2 > 12) { m2 = 1; y2 += 1; }
-
-    container.appendChild(buildMonthBlock(year, month));
-    container.appendChild(buildMonthBlock(y2, m2));
+  // 末尾空白
+  const total=firstDow+dim;
+  const rem=total%7;
+  if(rem>0){
+    for(let i=0;i<7-rem;i++){
+      const c=document.createElement('div');
+      c.className='cell empty';
+      grid.appendChild(c);
+    }
   }
+}
 
-  document.getElementById('generateBtn').addEventListener('click', render);
-  document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+// ── イベント ─────────────────────────────────────────────────
+document.getElementById('prevBtn').addEventListener('click',()=>{
+  let m=cM-1,y=cY;
+  if(m<1){m=12;y--;}
+  render(y,m);
+});
+document.getElementById('nextBtn').addEventListener('click',()=>{
+  let m=cM+1,y=cY;
+  if(m>12){m=1;y++;}
+  render(y,m);
+});
+document.getElementById('pBtn').addEventListener('click',()=>window.print());
 
-  populateYearSelect();
-  document.getElementById('monthInput').value = (new Date().getMonth()+1);
-  renderTodayWidget();
-  render();
+// 初期表示
+const _now=new Date();
+render(_now.getFullYear(),_now.getMonth()+1);
 </script>
 </body>
 </html>
