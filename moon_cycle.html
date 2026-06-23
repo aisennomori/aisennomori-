@@ -406,134 +406,83 @@
 
   // ============================================================
   // Astronomical new-moon calculation (Meeus low-precision series)
-  // ============================================================
-  function newMoonJDE(k) {
-    const T = k / 1236.85;
-    const T2 = T*T, T3 = T2*T, T4 = T3*T;
-    let JDE = 2451550.09766 + 29.530588861*k
-      + 0.00015437*T2 - 0.000000150*T3 + 0.00000000073*T4;
-
-    const M  = 2.5534 + 29.10535670*k - 0.0000014*T2 - 0.00000011*T3;
-    const Mp = 201.5643 + 385.81693528*k + 0.0107582*T2 + 0.00001238*T3 - 0.000000058*T4;
-    const F  = 160.7108 + 390.67050284*k - 0.0016118*T2 - 0.00000227*T3 + 0.000000011*T4;
-    const Om = 124.7746 - 1.56375588*k + 0.0020672*T2 + 0.00000215*T3;
-
-    const d2r = Math.PI/180;
-    const Ms = (M  % 360) * d2r;
-    const Mm = (Mp % 360) * d2r;
-    const Fm = (F  % 360) * d2r;
-    const Og = (Om % 360) * d2r;
-    const E  = 1 - 0.002516*T - 0.0000074*T2;
-
-    let corr = 0;
-    corr += -0.40720 * Math.sin(Mm);
-    corr +=  0.17241 * E * Math.sin(Ms);
-    corr +=  0.01608 * Math.sin(2*Mm);
-    corr +=  0.01039 * Math.sin(2*Fm);
-    corr +=  0.00739 * E * Math.sin(Mm - Ms);
-    corr += -0.00514 * E * Math.sin(Mm + Ms);
-    corr +=  0.00208 * E*E * Math.sin(2*Ms);
-    corr += -0.00111 * Math.sin(Mm - 2*Fm);
-    corr += -0.00057 * Math.sin(Mm + 2*Fm);
-    corr +=  0.00056 * E * Math.sin(2*Mm + Ms);
-    corr += -0.00042 * Math.sin(3*Mm);
-    corr +=  0.00042 * E * Math.sin(Ms + 2*Fm);
-    corr +=  0.00038 * E * Math.sin(Ms - 2*Fm);
-    corr += -0.00024 * E * Math.sin(2*Mm - Ms);
-    corr += -0.00017 * Math.sin(Og);
-    corr += -0.00007 * Math.sin(Mm + 2*Ms);
-    corr +=  0.00004 * Math.sin(2*Mm - 2*Fm);
-    corr +=  0.00004 * Math.sin(3*Ms);
-    corr +=  0.00003 * Math.sin(Mm + Ms - 2*Fm);
-    corr +=  0.00003 * Math.sin(2*Mm + 2*Fm);
-    corr += -0.00003 * Math.sin(Mm + Ms + 2*Fm);
-    corr +=  0.00003 * Math.sin(Mm - Ms + 2*Fm);
-    corr += -0.00002 * Math.sin(Mm - Ms - 2*Fm);
-    corr += -0.00002 * Math.sin(3*Mm + Ms);
-    corr +=  0.00002 * Math.sin(4*Mm);
-
-    return JDE + corr;
+    // ── 天文計算（Meeus）─────────────────────────────────────────
+  function newMoonJDE(k){
+    const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
+    const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
+    const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+    const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+    const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+    const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+    const s=Math.sin,E2=E*E;
+    return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+      -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+      +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+      -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+      -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+      -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+      +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+      +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+      -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
   }
+  const D=86400000;
+  function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
 
-  function jdeToUTCDate(jde) {
-    return new Date((jde - 2440587.5) * 86400000);
-  }
-
-  function kForYearMonth(year, month) {
-    const yearsFrac = year + (month - 0.5) / 12 - 2000;
-    return Math.floor(yearsFrac * 12.3685);
-  }
-
-  function newMoonCalendarDays(year) {
-    const kStart = kForYearMonth(year, 1) - 3;
-    const kEnd   = kForYearMonth(year, 12) + 3;
-    const days = [];
-    for (let k = kStart; k <= kEnd; k++) {
-      const utc = jdeToUTCDate(newMoonJDE(k));
-      const jst = new Date(utc.getTime() + 9*3600*1000);
-      days.push(Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate()));
+  // ── 新月リスト（JST日付＋時刻） ──────────────────────────────
+  const nmCache={};
+  function getNM(y){
+    if(nmCache[y]) return nmCache[y];
+    const seen=new Set(),list=[];
+    for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
+      const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
+      const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+      if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
     }
-    days.sort((a,b)=>a-b);
-    return days.filter((d,i)=> i===0 || d!==days[i-1]);
+    return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
   }
+  function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
 
-  const newMoonCache = {};
-  function getNewMoonDays(year){
-    if (!newMoonCache[year]) newMoonCache[year] = newMoonCalendarDays(year);
-    return newMoonCache[year];
-  }
+  // ── ハワイアンムーン コアロジック ────────────────────────────
+  // Hilo = 新月JST時刻が06:00前→当日、以降→翌日
+  function getHiloMs(nm){return nm.jstHour<6 ? nm.ms : nm.ms+D;}
 
-  function newMoonsNear(year){
-    return getNewMoonDays(year-1).concat(getNewMoonDays(year)).concat(getNewMoonDays(year+1));
-  }
-
-  // Find the lunar cycle (new moon -> next new moon) whose Hilo (new moon + 1 day)
-  // is the first one falling on or after the 1st of the given calendar month.
-  function findCycleForYearMonth(year, month){
-    const monthStart = Date.UTC(year, month-1, 1);
-    const nmList = newMoonsNear(year);
-    for (let i = 0; i < nmList.length - 1; i++){
-      const hiloDate = nmList[i] + 86400000;
-      if (hiloDate >= monthStart) {
-        return { nm: nmList[i], nextNm: nmList[i+1] };
-      }
+  // 指定年月を含むサイクルを返す
+  function findCycle(y,m){
+    const s=Date.UTC(y,m-1,1),list=nmNear(y);
+    for(let i=0;i<list.length-1;i++){
+      if(list[i].ms+D>=s) return{nm:list[i],nextNm:list[i+1]};
     }
     return null;
   }
 
-  // Given a cycle's new-moon boundaries, find the next cycle (forward) or
-  // previous cycle (backward).
-  function adjacentCycle(nm, nextNm, direction){
-    const y = new Date(nm).getUTCFullYear();
-    const nmList = newMoonsNear(y);
-    const idx = nmList.indexOf(nm);
-    if (idx === -1) return null;
-    if (direction > 0) {
-      if (idx+2 >= nmList.length) return null;
-      return { nm: nmList[idx+1], nextNm: nmList[idx+2] };
-    } else {
-      if (idx-1 < 0) return null;
-      return { nm: nmList[idx-1], nextNm: nmList[idx] };
+  // 指定日の夜番号(1-30)を返す
+  // Mauli有無はHilo間隔で判定、純粋カウント（逆算なし）
+  function getMoonNight(year,month,day){
+    const target=Date.UTC(year,month-1,day);
+    const list=nmNear(year);
+    let nmIdx=-1;
+    for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
+    if(nmIdx<0||nmIdx>=list.length-1) return null;
+    const nm=list[nmIdx],nextNm=list[nmIdx+1];
+    const hiloMs=getHiloMs(nm);
+    const nextHiloMs=getHiloMs(nextNm);
+    const hasMauli=Math.round((nextHiloMs-hiloMs)/D)===30;
+    // Hiloより前の日はMuku(30)またはMauli(29)
+    if(target<hiloMs){
+      const diff=Math.round((hiloMs-target)/D);
+      if(diff===1) return 30; // Muku
+      if(diff===2&&hasMauli) return 29; // Mauli
+      return null;
     }
+    // Hilo以降は純粋カウント
+    let offset=Math.round((target-hiloMs)/D);
+    if(!hasMauli&&offset>=28) offset++; // 第29夜スキップ
+    const n=offset+1;
+    return(n>=1&&n<=30)?n:null;
   }
 
-  function dateFromUTCms(ms){
-    return new Date(ms);
-  }
 
-  function fmtDate(ms){
-    const d = dateFromUTCms(ms);
-    return (d.getUTCFullYear()) + '年' + (d.getUTCMonth()+1) + '月' + d.getUTCDate() + '日';
-  }
-  function fmtShort(ms){
-    const d = dateFromUTCms(ms);
-    return (d.getUTCMonth()+1) + '/' + d.getUTCDate();
-  }
-
-  // ============================================================
-  // Rendering
-  // ============================================================
-  function moonIconSVG(dayIdx, lunLen, size){
+    function moonIconSVG(dayIdx, lunLen, size){
     size = size || 30;
     iconUid++;
     const r = size/2 - 1.5;
@@ -549,6 +498,25 @@
       + '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>'
       + '</svg>';
   }
+
+  // ── ユーティリティ ────────────────────────────────────────────
+  function fmtDate(ms){
+    const d=new Date(ms);
+    return d.getUTCFullYear()+'年'+(d.getUTCMonth()+1)+'月'+d.getUTCDate()+'日';
+  }
+  function fmtShort(ms){
+    const d=new Date(ms);
+    return (d.getUTCMonth()+1)+'/'+d.getUTCDate();
+  }
+  function dateFromUTCms(ms){ return new Date(ms); }
+  // ±1月移動（Hiloの年月基準）
+  function adjacentCycle(nm, _nextNm, dir){
+    const d=new Date(getHiloMs(nm));
+    let y=d.getUTCFullYear(), m=d.getUTCMonth()+1+dir;
+    if(m>12){m=1;y++;}else if(m<1){m=12;y--;}
+    return findCycle(y,m);
+  }
+
 
   function phaseColor(n){
     if (n <= 10) return 'var(--waxing)';
@@ -574,37 +542,46 @@
   function renderCycle(cycle){
     displayedCycle = cycle;
     const { nm, nextNm } = cycle;
-    const lunLen = Math.round((nextNm - nm) / 86400000);
+    const hiloMs = getHiloMs(nm);
+    const nextHiloMs = getHiloMs(nextNm);
+    const hasMauli = Math.round((nextHiloMs - hiloMs) / D) === 30;
+    const titleEndMs = nextHiloMs - D;
     const now = new Date();
     const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     document.getElementById('calTitle').innerHTML =
-      escapeHtml(fmtDate(nm + 86400000)) + ' 〜 ' + escapeHtml(fmtDate(nextNm))
-      + '<span class="range">ヒロ(1) 〜 ムク(30) ・ 全' + lunLen + '日間</span>';
+      escapeHtml(fmtDate(hiloMs)) + ' 〜 ' + escapeHtml(fmtDate(titleEndMs))
+      + '<span class="range">ヒロ(1) 〜 ムク(30)' + (hasMauli ? ' ／ Mauli あり' : '') + '</span>';
 
     const list = document.getElementById('calendarList');
     list.innerHTML = '';
 
-    for (let dayIdx = 1; dayIdx <= lunLen; dayIdx++){
-      const dateMs = nm + dayIdx * 86400000;
-      const n = (dayIdx === lunLen) ? 30 : dayIdx; // last day of cycle = Muku(30)
+    // 純粋カウント（先生方式）
+    let offset = 0;
+    for (let n = 1; n <= 30; n++){
+      const isMauliSkip = (n === 29 && !hasMauli);
+      const dateMs = isMauliSkip ? null : hiloMs + offset * D;
+      if (!isMauliSkip) offset++;
+
       const info = moonData[n];
-      const d = dateFromUTCms(dateMs);
-      const dow = dowNames[d.getUTCDay()];
-      const isToday = (dateMs === todayUTC);
+      const d = isMauliSkip ? null : dateFromUTCms(dateMs);
+      const dow = d ? dowNames[d.getUTCDay()] : '';
+      const isToday = dateMs === todayUTC;
 
       let dowClass = '';
       if (dow === '日') dowClass = 'sun';
       if (dow === '土') dowClass = 'sat';
 
       const card = document.createElement('div');
-      card.className = 'day-card' + (isToday ? ' today' : '');
-      card.style.setProperty('--phase-color', phaseColor(info.n));
+      card.className = 'day-card' + (isToday ? ' today' : '') + (isMauliSkip ? ' no-date' : '');
+      if (!isMauliSkip) card.style.setProperty('--phase-color', phaseColor(info.n));
       const marker = markerForN(info.n);
       const markerHtml = marker ? '<span class="marker">' + marker + '</span>' : '';
+      const dayIdx = dateMs ? Math.round((dateMs - nm.ms) / D) : n - 1;
+      const lunLen = Math.round((nextNm.ms - nm.ms) / D);
       card.innerHTML =
         '<div class="date-block">'
-          + '<div class="date-num">' + escapeHtml(fmtShort(dateMs)) + '</div>'
+          + '<div class="date-num">' + (isMauliSkip ? '—' : escapeHtml(fmtShort(dateMs))) + '</div>'
           + '<div class="date-dow-row"><span class="date-dow ' + dowClass + '">' + dow + '</span>' + markerHtml + '</div>'
         + '</div>'
         + '<div class="moon-wrap">' + moonIconSVG(dayIdx, lunLen) + '</div>'
@@ -629,7 +606,7 @@
   }
 
   function showForYearMonth(year, month){
-    const cycle = findCycleForYearMonth(year, month);
+    const cycle = findCycle(year, month);
     if (cycle) renderCycle(cycle);
   }
 

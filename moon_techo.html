@@ -447,78 +447,60 @@
     {id:'hoemi',  label:"HO'EMI",  range:[21,30]},
   ];
 
-  // ============================================================
-  // 天文計算（Meeus低精度）
-  // ============================================================
+  // ── 天文計算（Meeus）─────────────────────────────────────────
   function newMoonJDE(k){
     const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
-    let J=2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4;
-    const M=2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3;
-    const Mp=201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4;
-    const F=160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3+0.000000011*T4;
-    const Om=124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3;
     const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
-    const Ms=(M%360)*r,Mm=(Mp%360)*r,Fm=(F%360)*r,Og=(Om%360)*r;
-    let c=0;
-    c+=-0.40720*Math.sin(Mm);c+=0.17241*E*Math.sin(Ms);c+=0.01608*Math.sin(2*Mm);
-    c+=0.01039*Math.sin(2*Fm);c+=0.00739*E*Math.sin(Mm-Ms);c+=-0.00514*E*Math.sin(Mm+Ms);
-    c+=0.00208*E*E*Math.sin(2*Ms);c+=-0.00111*Math.sin(Mm-2*Fm);c+=-0.00057*Math.sin(Mm+2*Fm);
-    c+=0.00056*E*Math.sin(2*Mm+Ms);c+=-0.00042*Math.sin(3*Mm);c+=0.00042*E*Math.sin(Ms+2*Fm);
-    c+=0.00038*E*Math.sin(Ms-2*Fm);c+=-0.00024*E*Math.sin(2*Mm-Ms);c+=-0.00017*Math.sin(Og);
-    c+=-0.00007*Math.sin(Mm+2*Ms);c+=0.00004*Math.sin(2*Mm-2*Fm);c+=0.00004*Math.sin(3*Ms);
-    c+=0.00003*Math.sin(Mm+Ms-2*Fm);c+=0.00003*Math.sin(2*Mm+2*Fm);
-    c+=-0.00003*Math.sin(Mm+Ms+2*Fm);c+=0.00003*Math.sin(Mm-Ms+2*Fm);
-    c+=-0.00002*Math.sin(Mm-Ms-2*Fm);c+=-0.00002*Math.sin(3*Mm+Ms);c+=0.00002*Math.sin(4*Mm);
-    return J+c;
+    const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+    const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+    const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+    const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+    const s=Math.sin,E2=E*E;
+    return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+      -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+      +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+      -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+      -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+      -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+      +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+      +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+      -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
   }
-  function jdeToUTC(jde){return new Date((jde-2440587.5)*86400000);}
+  const D=86400000;
   function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
 
-  // 新月リスト生成（JST日付 + JST時刻をセットで保持）
-  // バグ修正：kForの範囲を広げ、年をまたぐ新月を確実に取得
-  function nmDays(year){
-    const seen=new Set(), list=[];
-    for(let k=kFor(year,1)-4;k<=kFor(year,12)+4;k++){
-      const utc=jdeToUTC(newMoonJDE(k));
-      const jst=new Date(utc.getTime()+9*3600*1000);
-      const dateMs=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
-      const key=dateMs+'';
-      if(!seen.has(key)){
-        seen.add(key);
-        list.push({ms:dateMs, jstHour:jst.getUTCHours()});
-      }
-    }
-    list.sort((a,b)=>a.ms-b.ms);
-    return list;
-  }
+  // ── 新月リスト生成（JST日付＋時刻） ─────────────────────────
   const nmCache={};
-  function getNM(y){if(!nmCache[y])nmCache[y]=nmDays(y);return nmCache[y];}
-  function nmNear(y){return getNM(y-1).concat(getNM(y)).concat(getNM(y+1));}
-
-  // ============================================================
-  // 先生方式：Hilo計算
-  // 新月のJST時刻が 06:00 より前 → Hilo=新月当日
-  // 新月のJST時刻が 06:00 以降  → Hilo=新月翌日
-  // ============================================================
-  function getHiloMs(nmObj){
-    return nmObj.jstHour < 6 ? nmObj.ms : nmObj.ms + 86400000;
+  function getNM(y){
+    if(nmCache[y]) return nmCache[y];
+    const seen=new Set(),list=[];
+    for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
+      const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
+      const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+      if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
+    }
+    return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
   }
+  function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
+
+  // ── ハワイアンムーン コアロジック ────────────────────────────
+  // Hilo = 新月JST時刻が06:00前→当日、以降→翌日
+  function getHiloMs(nm){return nm.jstHour<6 ? nm.ms : nm.ms+D;}
+
+  // 指定年月を含むサイクルを返す
   function findCycle(y,m){
     const s=Date.UTC(y,m-1,1),list=nmNear(y);
     for(let i=0;i<list.length-1;i++){
-      if(list[i].ms+86400000>=s) return{nm:list[i],nextNm:list[i+1]};
+      if(list[i].ms+D>=s) return{nm:list[i],nextNm:list[i+1]};
     }
     return null;
   }
-  function adjCycle(nmObj,nextNmObj,dir){
-    // HiloのUTC日付から年月を取得して±1月のサイクルを探す
-    const hiloMs=getHiloMs(nmObj);
-    const hiloDate=new Date(hiloMs);
-    let y=hiloDate.getUTCFullYear();
-    let m=hiloDate.getUTCMonth()+1; // 1-12
-    m+=dir;
-    if(m>12){m=1;y++;}
-    else if(m<1){m=12;y--;}
+
+  // ±1月移動（Hiloの年月基準）
+  function adjCycle(nm,_,dir){
+    const d=new Date(getHiloMs(nm));
+    let y=d.getUTCFullYear(),m=d.getUTCMonth()+1+dir;
+    if(m>12){m=1;y++;}else if(m<1){m=12;y--;}
     return findCycle(y,m);
   }
   function fmtDate(ms){const d=new Date(ms);return d.getUTCFullYear()+'年'+(d.getUTCMonth()+1)+'月'+d.getUTCDate()+'日';}
@@ -527,10 +509,7 @@
     if(n>=1&&n<=3)return'🔵';if(n>=7&&n<=10)return'❤️';
     if(n>=18&&n<=20)return'🟢';if(n>=23&&n<=26)return'🩵';return'';
   }
-  function sameUTC(a,b){
-    const da=new Date(a),db=new Date(b);
-    return da.getUTCFullYear()===db.getUTCFullYear()&&da.getUTCMonth()===db.getUTCMonth()&&da.getUTCDate()===db.getUTCDate();
-  }
+  function sameUTC(a,b){const da=new Date(a),db=new Date(b);return da.getUTCFullYear()===db.getUTCFullYear()&&da.getUTCMonth()===db.getUTCMonth()&&da.getUTCDate()===db.getUTCDate();}
 
   // ===== ツールチップ（タッチデバイス対応） =====
   let openTip=null;
@@ -558,53 +537,25 @@
     if(displayedCycle) renderCycle(displayedCycle);
   }
 
-  // ============================================================
-  // Rendering
-  // ============================================================
-  function buildDayMap(nmObj, nextNmObj){
-    const todayMs=Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
-    const dayMap={};
-    const hiloMs=getHiloMs(nmObj);
-    const nextHiloMs=getHiloMs(nextNmObj);
-    const interval=Math.round((nextNmObj.ms-nmObj.ms)/86400000);
-    // Mauli有無はHilo間隔で判定（新月間隔ではなくHilo間隔）
-    const hiloInterval=Math.round((nextHiloMs-hiloMs)/86400000);
-    const hasMauli=(hiloInterval===30);
-    // ══════════════════════════════════════════════
-    // 先生方式 確定ルール
-    //
-    // ハワイ暦の構造：
-    //   Muku(30)の翌夜が次サイクルのHilo(1)
-    //   → Muku = 今サイクルHilo − 1日
-    //   → Mauli = 今サイクルHilo − 2日（30日サイクルのみ）
-    //
-    // 手帖の日付割り当て：
-    //   第1夜(Hilo) = hiloMs
-    //   第2〜28夜   = hiloMs + 1〜27日
-    //   第29夜(Mauli) = hasMauliならhiloMs-2日、なければnull(グレーアウト)
-    //   第30夜(Muku)  = hiloMs - 1日
-    //
-    // ※ 第29・30夜は日付上Hiloより前になる（ハワイ暦の正常な構造）
-    // ══════════════════════════════════════════════
-
-    // 純粋カウント：Hiloから順番に夜を割り当てる
-    // Mauliなし(29日): 第1〜28夜=順番、第29=スキップ、第30=第29の翌日
-    // Mauliあり(30日): 第1〜29夜=順番、第30=第29の翌日
-    let offset = 0;
-    for(let n=1; n<=30; n++){
-      if(n===29 && !hasMauli){
-        dayMap[29] = null; // スキップ
-      } else {
-        const ms = hiloMs + offset*86400000;
-        dayMap[n] = {ms, isToday:sameUTC(ms,todayMs)};
-        offset++;
-      }
+  // ── レンダリング ──────────────────────────────────────────────
+  // Mauli有無：Hilo間隔が30日のサイクルのみMauliあり
+  // 夜の割り当て：Hiloから純粋に順番カウント（逆算なし）
+  //   Mauliあり: 1〜29夜=Hilo+0〜28日, 30夜目=Hilo+29日
+  //   Mauliなし: 1〜28夜=Hilo+0〜27日, 29夜目=null, 30夜目=Hilo+28日
+  function buildDayMap(nm,nextNm){
+    const today=Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+    const hiloMs=getHiloMs(nm);
+    const hasMauli=Math.round((getHiloMs(nextNm)-hiloMs)/D)===30;
+    const map={};
+    let o=0;
+    for(let n=1;n<=30;n++){
+      if(n===29&&!hasMauli){map[29]=null;}
+      else{const ms=hiloMs+o*D;map[n]={ms,isToday:sameUTC(ms,today)};o++;}
     }
-
-    return dayMap;
+    return map;
   }
 
-  function renderGrid(inner, dayMap){
+  function renderGrid(inner,dayMap){
     GROUPS.forEach(group=>{
       const block=document.createElement('div');
       block.className='group-block';
@@ -652,7 +603,7 @@
     });
   }
 
-  function renderCard(inner, dayMap){
+  function renderCard(inner,dayMap){
     GROUPS.forEach(group=>{
       const sec=document.createElement('div');
       sec.className='group-section '+group.id;
@@ -708,25 +659,20 @@
     displayedCycle=cycle;
     const{nm,nextNm}=cycle;
     const hiloMs=getHiloMs(nm);
-    const interval=Math.round((nextNm.ms-nm.ms)/86400000);
-    const hasMauli=(interval===30);
-    // タイトル終端 = 次Hilo − 1日（常に）
-    const nextHiloMs = getHiloMs(nextNm);
-    const titleEndMs = nextHiloMs - 86400000;
+    const titleEndMs=getHiloMs(nextNm)-D;
+    const hasMauli=Math.round((getHiloMs(nextNm)-hiloMs)/D)===30;
     document.getElementById('calTitle').textContent=
       fmtDate(hiloMs)+'〜'+fmtDate(titleEndMs)+'（1サイクル）';
     document.getElementById('periodBand').textContent=
       fmtShort(hiloMs)+' 〜 '+fmtShort(titleEndMs)+
       '（'+new Date(hiloMs).getUTCFullYear()+'年）'+(hasMauli?' ／ Mauli あり':'');
-
     const dayMap=buildDayMap(nm,nextNm);
     const inner=document.getElementById('sheetInner');
     const pb=document.getElementById('periodBand');
     inner.innerHTML='';
     inner.appendChild(pb);
-
     if(currentMode==='grid') renderGrid(inner,dayMap);
-    else                     renderCard(inner,dayMap);
+    else renderCard(inner,dayMap);
   }
 
   function populateYearSelect(){

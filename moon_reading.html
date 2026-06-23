@@ -923,121 +923,98 @@ function getJulianDay(year, month, day) {
        + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 }
 
-// k番目の朔（新月）のユリウス日（力学時, JDE）をMeeusの式で計算
-function newMoonJDE(k) {
-  const T = k / 1236.85;
-  const T2 = T*T, T3 = T2*T, T4 = T3*T;
-  let JDE = 2451550.09766 + 29.530588861*k
-    + 0.00015437*T2 - 0.000000150*T3 + 0.00000000073*T4;
-
-  const M  = 2.5534 + 29.10535670*k - 0.0000014*T2 - 0.00000011*T3;
-  const Mp = 201.5643 + 385.81693528*k + 0.0107582*T2 + 0.00001238*T3 - 0.000000058*T4;
-  const F  = 160.7108 + 390.67050284*k - 0.0016118*T2 - 0.00000227*T3 + 0.000000011*T4;
-  const Om = 124.7746 - 1.56375588*k + 0.0020672*T2 + 0.00000215*T3;
-
-  const d2r = Math.PI/180;
-  const Ms = (M  % 360) * d2r;
-  const Mm = (Mp % 360) * d2r;
-  const Fm = (F  % 360) * d2r;
-  const Og = (Om % 360) * d2r;
-  const E  = 1 - 0.002516*T - 0.0000074*T2;
-
-  let corr = 0;
-  corr += -0.40720 * Math.sin(Mm);
-  corr +=  0.17241 * E * Math.sin(Ms);
-  corr +=  0.01608 * Math.sin(2*Mm);
-  corr +=  0.01039 * Math.sin(2*Fm);
-  corr +=  0.00739 * E * Math.sin(Mm - Ms);
-  corr += -0.00514 * E * Math.sin(Mm + Ms);
-  corr +=  0.00208 * E*E * Math.sin(2*Ms);
-  corr += -0.00111 * Math.sin(Mm - 2*Fm);
-  corr += -0.00057 * Math.sin(Mm + 2*Fm);
-  corr +=  0.00056 * E * Math.sin(2*Mm + Ms);
-  corr += -0.00042 * Math.sin(3*Mm);
-  corr +=  0.00042 * E * Math.sin(Ms + 2*Fm);
-  corr +=  0.00038 * E * Math.sin(Ms - 2*Fm);
-  corr += -0.00024 * E * Math.sin(2*Mm - Ms);
-  corr += -0.00017 * Math.sin(Og);
-  corr += -0.00007 * Math.sin(Mm + 2*Ms);
-  corr +=  0.00004 * Math.sin(2*Mm - 2*Fm);
-  corr +=  0.00004 * Math.sin(3*Ms);
-  corr +=  0.00003 * Math.sin(Mm + Ms - 2*Fm);
-  corr +=  0.00003 * Math.sin(2*Mm + 2*Fm);
-  corr += -0.00003 * Math.sin(Mm + Ms + 2*Fm);
-  corr +=  0.00003 * Math.sin(Mm - Ms + 2*Fm);
-  corr += -0.00002 * Math.sin(Mm - Ms - 2*Fm);
-  corr += -0.00002 * Math.sin(3*Mm + Ms);
-  corr +=  0.00002 * Math.sin(4*Mm);
-
-  return JDE + corr;
+// ── 天文計算（Meeus）─────────────────────────────────────────
+function newMoonJDE(k){
+  const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
+  const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
+  const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+  const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+  const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+  const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+  const s=Math.sin,E2=E*E;
+  return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+    -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+    +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+    -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+    -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+    -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+    +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+    +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+    -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
 }
+const D=86400000;
+function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
 
-function jdeToUTCDate(jde) {
-  return new Date((jde - 2440587.5) * 86400000);
-}
-
-function kForYearMonth(year, month) {
-  const yearsFrac = year + (month - 0.5) / 12 - 2000;
-  return Math.floor(yearsFrac * 12.3685);
-}
-
-// 指定年の朔（新月）の日付（日本時間の0時基準, UTCミリ秒）を全て列挙
-function newMoonCalendarDays(year) {
-  const kStart = kForYearMonth(year, 1) - 3;
-  const kEnd   = kForYearMonth(year, 12) + 3;
-  const days = [];
-  for (let k = kStart; k <= kEnd; k++) {
-    const utc = jdeToUTCDate(newMoonJDE(k));
-    const jst = new Date(utc.getTime() + 9*3600*1000);
-    days.push(Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate()));
+// ── 新月リスト（JST日付＋時刻） ──────────────────────────────
+const nmCache={};
+function getNM(y){
+  if(nmCache[y]) return nmCache[y];
+  const seen=new Set(),list=[];
+  for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
+    const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
+    const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+    if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
   }
-  days.sort((a,b)=>a-b);
-  return days.filter((d,i)=> i===0 || d!==days[i-1]);
+  return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
+}
+function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
+
+// ── ハワイアンムーン コアロジック ────────────────────────────
+// Hilo = 新月JST時刻が06:00前→当日、以降→翌日
+function getHiloMs(nm){return nm.jstHour<6 ? nm.ms : nm.ms+D;}
+
+// 指定年月を含むサイクルを返す
+function findCycle(y,m){
+  const s=Date.UTC(y,m-1,1),list=nmNear(y);
+  for(let i=0;i<list.length-1;i++){
+    if(list[i].ms+D>=s) return{nm:list[i],nextNm:list[i+1]};
+  }
+  return null;
 }
 
-const newMoonCache = {};
-function getNewMoonDays(year){
-  if (!newMoonCache[year]) newMoonCache[year] = newMoonCalendarDays(year);
-  return newMoonCache[year];
+// 指定日の夜番号(1-30)を返す
+// Mauli有無はHilo間隔で判定、純粋カウント（逆算なし）
+function getMoonNight(year,month,day){
+  const target=Date.UTC(year,month-1,day);
+  const list=nmNear(year);
+  let nmIdx=-1;
+  for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
+  if(nmIdx<0||nmIdx>=list.length-1) return null;
+  const nm=list[nmIdx],nextNm=list[nmIdx+1];
+  const hiloMs=getHiloMs(nm);
+  const nextHiloMs=getHiloMs(nextNm);
+  const hasMauli=Math.round((nextHiloMs-hiloMs)/D)===30;
+  // Hiloより前の日はMuku(30)またはMauli(29)
+  if(target<hiloMs){
+    const diff=Math.round((hiloMs-target)/D);
+    if(diff===1) return 30; // Muku
+    if(diff===2&&hasMauli) return 29; // Mauli
+    return null;
+  }
+  // Hilo以降は純粋カウント
+  let offset=Math.round((target-hiloMs)/D);
+  if(!hasMauli&&offset>=28) offset++; // 第29夜スキップ
+  const n=offset+1;
+  return(n>=1&&n<=30)?n:null;
 }
 
-function newMoonsNear(year){
-  return getNewMoonDays(year-1).concat(getNewMoonDays(year)).concat(getNewMoonDays(year+1));
-}
 
-// 指定日が属するサイクル（直前の朔 nm 〜 次の朔 nextNm）を求める
-function surroundingNewMoons(year, month, day){
+  
+// getMoonAge互換（月相SVG用）
+function getMoonAge(year, month, day){
   const target = Date.UTC(year, month-1, day);
-  const candidates = newMoonsNear(year);
-
+  const list = nmNear(year);
   let nmIdx = -1;
-  for (let i=0; i<candidates.length; i++){
-    if (candidates[i] <= target) nmIdx = i;
-    else break;
-  }
-  return { nm: candidates[nmIdx], nextNm: candidates[nmIdx+1] };
+  for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
+  if(nmIdx<0||nmIdx>=list.length-1) return 14.5;
+  const nm=list[nmIdx],nextNm=list[nmIdx+1];
+  const lunLen=Math.round((nextNm.ms-nm.ms)/D);
+  const dayIdx=Math.round((target-nm.ms)/D);
+  return (dayIdx===0?lunLen:dayIdx)-1+0.5;
 }
-
-// 朔からの経過日数(dayIdx)とそのサイクルの実際の長さ(lunLen)、
-// 夜番号(n: 1〜30, 朔の翌日が1夜=ヒロ, 最終日は必ず30夜=ムク)を返す
-function moonDayInfo(year, month, day){
-  const target = Date.UTC(year, month-1, day);
-  const { nm, nextNm } = surroundingNewMoons(year, month, day);
-  const dayIdx = Math.round((target - nm) / 86400000);
-  const lunLen = Math.round((nextNm - nm) / 86400000);
-  const n = (dayIdx === 0) ? 30 : dayIdx; // 朔の日自体は前サイクルのムク(30)とする
-  return { n, dayIdx, lunLen };
-}
-
-// 既存コードとの互換用：月齢相当の値（0〜lunLen未満の小数日数）を返す
-function getMoonAge(year, month, day) {
-  const { dayIdx, lunLen } = moonDayInfo(year, month, day);
-  return (dayIdx === 0 ? lunLen : dayIdx) - 1 + 0.5; // 表示用の近似値（0〜29.x）
-}
-
-// 夜番号（1〜30）を返す
+// 夜番号（1〜30）を返す ← getMoonNightに統一
 function getNightIndex(year, month, day) {
-  return moonDayInfo(year, month, day).n;
+  return getMoonNight(year, month, day);
 }
 
 /* ===== MAIN FUNCTION ===== */
