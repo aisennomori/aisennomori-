@@ -662,10 +662,8 @@
     const titleEndMs=getHiloMs(nextNm)-D;
     const hasMauli=Math.round((getHiloMs(nextNm)-hiloMs)/D)===30;
     document.getElementById('calTitle').textContent=
-      fmtDate(hiloMs)+'〜'+fmtDate(titleEndMs)+'（1サイクル）';
-    document.getElementById('periodBand').textContent=
-      fmtShort(hiloMs)+' 〜 '+fmtShort(titleEndMs)+
-      '（'+new Date(hiloMs).getUTCFullYear()+'年）'+(hasMauli?' ／ Mauli あり':'');
+      fmtDate(hiloMs)+'〜'+fmtDate(titleEndMs);
+    document.getElementById('periodBand').textContent='';
     const dayMap=buildDayMap(nm,nextNm);
     const inner=document.getElementById('sheetInner');
     const pb=document.getElementById('periodBand');
