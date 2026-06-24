@@ -18,13 +18,25 @@
   .mode-tabs{display:flex;margin:14px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
   .mode-tab{flex:1;padding:11px 4px;text-align:center;font-family:var(--font-d);font-size:.74rem;font-weight:700;color:var(--ink-soft);cursor:pointer;border:none;background:none;letter-spacing:.01em;transition:background .2s,color .2s;}
   .mode-tab.active{background:var(--ink);color:#FBF6EC;border-radius:12px;}
-  .display-card{margin:16px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 20px 24px;text-align:center;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
+  .display-card{margin:16px 16px 0;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px 14px;min-height:200px;position:relative;}
+  .card-inner{display:grid;grid-template-columns:1fr 140px 1fr;gap:8px;align-items:center;width:100%;}
+  /* 左カラム */
+  .card-left{text-align:left;padding:4px 6px 4px 0;}
+  .cl-short{font-family:var(--font-d);font-weight:700;font-size:.88rem;color:var(--ink);line-height:1.4;margin-bottom:6px;}
+  .cl-detail{font-size:.74rem;color:var(--ink-soft);line-height:1.6;}
+  /* 中央カラム */
+  .card-center{display:flex;flex-direction:column;align-items:center;text-align:center;}
+  /* 右カラム */
+  .card-right{text-align:left;padding:4px 0 4px 6px;display:flex;flex-direction:column;gap:8px;}
+  .cr-item{display:flex;flex-direction:column;gap:2px;}
+  .cr-label{font-size:.66rem;font-weight:700;color:var(--teal);letter-spacing:.05em;}
+  .cr-val{font-size:.82rem;color:var(--ink);}
   .hawaii-name.hidden,.kana-name.hidden{visibility:hidden;opacity:0;}
   .hawaii-name,.kana-name{transition:opacity .25s;}
   .display-card .phase-emoji{font-size:2.2rem;margin-bottom:6px;}
-  .display-card .night-num{font-family:var(--font-d);font-size:3rem;font-weight:700;color:var(--gold);line-height:1;}
-  .display-card .hawaii-name{font-family:var(--font-d);font-size:1.6rem;font-weight:700;color:var(--ink);margin-top:10px;line-height:1.2;}
-  .display-card .kana-name{font-size:1.05rem;color:var(--ink-soft);margin-top:6px;}
+  .display-card .night-num{font-family:var(--font-d);font-size:2.4rem;font-weight:700;color:var(--gold);line-height:1;}
+  .display-card .hawaii-name{font-family:var(--font-d);font-size:1.3rem;font-weight:700;color:var(--ink);margin-top:8px;line-height:1.2;}
+  .display-card .kana-name{font-size:.88rem;color:var(--ink-soft);margin-top:4px;}
   .display-card .phase-label{position:absolute;top:14px;right:16px;font-size:.68rem;color:var(--ink-soft);background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:3px 10px;}
   .display-card.speaking{border-color:var(--teal);box-shadow:0 0 0 3px rgba(79,157,148,.18);}
   .progress-bar-wrap{margin:12px 16px 0;background:var(--line);border-radius:99px;height:5px;overflow:hidden;}
@@ -48,6 +60,19 @@
   .tap-nav button{flex:1;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-family:var(--font-b);font-size:.9rem;color:var(--ink);cursor:pointer;}
   .tap-nav button:active{background:var(--line);}
   .step-info{margin:12px 16px 0;background:#F0FAFA;border:1px solid #B8DDD9;border-radius:12px;padding:10px 14px;font-size:.78rem;color:#2E6A65;line-height:1.6;}
+
+  /* 意味パネル（練習モード） */
+  .meaning-card{margin:12px 16px 0;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:16px;}
+  .meaning-short{font-family:var(--font-d);font-weight:700;font-size:1.05rem;
+    color:var(--ink);margin-bottom:8px;letter-spacing:.02em;}
+  .meaning-detail{font-size:.82rem;color:var(--ink-soft);line-height:1.7;
+    margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--line);}
+  .meaning-cols{display:flex;flex-direction:column;gap:6px;}
+  .meaning-item{display:flex;align-items:baseline;gap:8px;}
+  .meaning-label{font-size:.72rem;color:var(--teal);font-weight:700;
+    letter-spacing:.04em;white-space:nowrap;min-width:80px;}
+  .meaning-val{font-size:.85rem;color:var(--ink);}
   .notice{margin:14px 16px 0;font-size:.7rem;color:var(--ink-soft);line-height:1.6;text-align:center;}
 </style>
 </head>
@@ -68,10 +93,36 @@
 
   <div class="display-card" id="displayCard">
     <span class="phase-label" id="phaseLabel">—</span>
-    <div id="moonSvgWrap" style="margin-bottom:6px;"></div>
-    <div class="night-num" id="nightNum">—</div>
-    <div class="hawaii-name" id="hawaiiName">ハワイアン</div>
-    <div class="kana-name" id="kanaName">ムーン30夜</div>
+    <!-- 3カラム: 左意味 | 中央月 | 右属性 -->
+    <div class="card-inner">
+      <!-- 左: short + detail（練習モードのみ表示） -->
+      <div class="card-left" id="cardLeft" style="visibility:hidden;">
+        <div class="cl-short" id="clShort">─</div>
+        <div class="cl-detail" id="clDetail">─</div>
+      </div>
+      <!-- 中央: 月アイコン + 番号 + 名前 -->
+      <div class="card-center">
+        <div id="moonSvgWrap" style="margin-bottom:6px;"></div>
+        <div class="night-num" id="nightNum">—</div>
+        <div class="hawaii-name" id="hawaiiName">ハワイアン</div>
+        <div class="kana-name" id="kanaName">ムーン30夜</div>
+      </div>
+      <!-- 右: nature / culture / spirit（練習モードのみ表示） -->
+      <div class="card-right" id="cardRight" style="visibility:hidden;">
+        <div class="cr-item">
+          <span class="cr-label">自然</span>
+          <span class="cr-val" id="crNature">─</span>
+        </div>
+        <div class="cr-item">
+          <span class="cr-label">文化</span>
+          <span class="cr-val" id="crCulture">─</span>
+        </div>
+        <div class="cr-item">
+          <span class="cr-label">精神</span>
+          <span class="cr-val" id="crSpirit">─</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="progress-bar-wrap">
@@ -95,6 +146,7 @@
     </div>
     <div class="speed-label" id="speedLabel">ランダム：30夜をシャッフルして読み上げます</div>
   </div>
+
 
   <div class="tap-controls" id="practiceControls" style="display:none;">
     <button class="tap-main-btn" id="practiceSpeakBtn" onclick="practiceSpeak()">🔊 読み上げる</button>
@@ -149,6 +201,39 @@ const nights=[
   {n:29,hw:"Mauli",          hwRead:"Mauli",        kana:"マウリ",              dayIdx:29, phase:"再生"},
   {n:30,hw:"Muku",           hwRead:"Muku",         kana:"ムク",                dayIdx:0,  phase:"再生"},
 ];
+
+const NIGHT_DATA={
+  1: {short:'始まりの芽生え',   detail:'新月直後の光がねじれながら現れる日。未来の方向性が静かに動き出す。',nature:'光の芽生え',   culture:'始まりの兆し', spirit:'直感の目覚め'},
+  2: {short:'光の兆し',         detail:'月の輪郭が初めて見える日。物事の輪郭が浮かび上がる。',               nature:'輪郭が出る',   culture:'兆し',         spirit:'洞察'},
+  3: {short:'意志が立つ',       detail:'行動の柱が立つ日。小さな一歩に最適。',                               nature:'安定した光',   culture:'行動開始',     spirit:'意志の確立'},
+  4: {short:'基盤を固める',     detail:'二本目の柱が立ち、安定感が増す日。',                                 nature:'光が増す',     culture:'基盤形成',     spirit:'落ち着き'},
+  5: {short:'形が整う',         detail:'三本目の柱が立ち、協力が進む日。',                                   nature:'形が整う',     culture:'協力',         spirit:'調和'},
+  6: {short:'行動の完了',       detail:'成長のピーク直前。仕上げに向く日。',                                 nature:'満ちる直前',   culture:'完了',         spirit:'達成'},
+  7: {short:'停滞の始まり',     detail:'潮が弱まり、動かない方が良い日。',                                   nature:'停滞開始',     culture:'休息',         spirit:'内省'},
+  8: {short:'無理は禁物',       detail:'流れが弱く、成果が出にくい日。',                                     nature:'弱い潮',       culture:'調整',         spirit:'メンテナンス'},
+  9: {short:'流れに任せる',     detail:'停滞のピーク。整理に向く日。',                                       nature:'停滞最大',     culture:'断捨離',       spirit:'手放し'},
+  10:{short:'停滞の終わり',     detail:'リセットが起こる日。',                                               nature:'潮が戻る',     culture:'切替',         spirit:'軽さ'},
+  11:{short:'静かに満ちる',     detail:'内側の力が育つ日。集中に向く。',                                     nature:'静かな増光',   culture:'学び',         spirit:'集中'},
+  12:{short:'花開く日',         detail:'心が柔らかく広がる日。',                                             nature:'花のような光', culture:'調和',         spirit:'優しさ'},
+  13:{short:'実りの兆し',       detail:'成果が見え始める日。',                                               nature:'実りの兆し',   culture:'豊穣',         spirit:'上昇'},
+  14:{short:'神聖が満ちる',     detail:'祈りや儀式に最適な日。',                                             nature:'神聖な光',     culture:'祈り',         spirit:'導き'},
+  15:{short:'満月の力',         detail:'達成と祝福のエネルギー。',                                           nature:'最大光',       culture:'祝福',         spirit:'実現'},
+  16:{short:'最高潮の光',       detail:'真実が見える日。',                                                   nature:'光の極み',     culture:'決断',         spirit:'明晰'},
+  17:{short:'手放しの始まり',   detail:'光がこぼれ落ちる日。感情の浄化。',                                   nature:'減光',         culture:'手放し',       spirit:'浄化'},
+  18:{short:'植物の力①',        detail:'薬草や癒しに最適な日。',                                             nature:'植物の力',     culture:'癒し',         spirit:'回復'},
+  19:{short:'植物の力②',        detail:'調整と浄化が進む日。',                                               nature:'植物の力',     culture:'調整',         spirit:'整う'},
+  20:{short:'植物の完了',       detail:'癒しのサイクルが完了する日。',                                       nature:'植物の完了',   culture:'一区切り',     spirit:'安定'},
+  21:{short:'浄化の始まり',     detail:'不要なものが浮き上がる日。',                                         nature:'浄化開始',     culture:'整理',         spirit:'気づき'},
+  22:{short:'整理が進む',       detail:'深い浄化が起こる日。',                                               nature:'浄化深化',     culture:'調整',         spirit:'静寂'},
+  23:{short:'浄化の完了',       detail:'心が軽くなる日。',                                                   nature:'浄化完了',     culture:'軽さ',         spirit:'クリア'},
+  24:{short:'海の力①',          detail:'巡りと流れが動く日。',                                               nature:'海の力',       culture:'行動',         spirit:'流れ'},
+  25:{short:'海の力②',          detail:'豊かさが強まる日。',                                                 nature:'海の力',       culture:'豊穣',         spirit:'チャンス'},
+  26:{short:'海の最大浄化',     detail:'浄化と再生のピークの日。',                                           nature:'海の極み',     culture:'再生',         spirit:'変容'},
+  27:{short:'生命の源',         detail:'水と祈りの力が戻る日。',                                             nature:'源の水',       culture:'祈り',         spirit:'リセット'},
+  28:{short:'恵みと調和',       detail:'平和と豊穣の象徴の日。',                                             nature:'恵み',         culture:'調和',         spirit:'受容'},
+  29:{short:'生命の残り火',     detail:'終わりと始まりの境界の日。',                                         nature:'残り火',       culture:'境界',         spirit:'深い内省'},
+  30:{short:'完全な終わり',     detail:'すべてが無に戻る日。',                                               nature:'完全な闇',     culture:'終わり',       spirit:'手放し'},
+};
 const stepConfigs={
   1:{label:"ランダム",desc:"ランダム：30夜をシャッフルして読み上げます",rate:0.85,pause:1800},
   2:{label:"普通",desc:"普通：ハワイ語を普通のスピードで読み上げます",rate:1.0,pause:1400},
@@ -182,6 +267,21 @@ function resetProgress(){
   document.getElementById('progressPct').textContent='';
 }
 function setStepInfo(text){document.getElementById('stepInfo').textContent=text;}
+
+function updateMeaning(n){
+  const d=NIGHT_DATA[n];
+  if(!d) return;
+  document.getElementById('clShort').textContent=d.short;
+  document.getElementById('clDetail').textContent=d.detail;
+  document.getElementById('crNature').textContent=d.nature;
+  document.getElementById('crCulture').textContent=d.culture;
+  document.getElementById('crSpirit').textContent=d.spirit;
+}
+function showMeaningCols(show){
+  const v=show?'visible':'hidden';
+  document.getElementById('cardLeft').style.visibility=v;
+  document.getElementById('cardRight').style.visibility=v;
+}
 function switchMode(mode){
   stopPlayback();currentMode=mode;
   document.getElementById('tabAuto').classList.toggle('active',mode==='auto');
@@ -190,9 +290,9 @@ function switchMode(mode){
   document.getElementById('autoControls').style.display=mode==='auto'?'':'none';
   document.getElementById('practiceControls').style.display=mode==='practice'?'':'none';
   document.getElementById('tapControls').style.display=mode==='tap'?'':'none';
-  if(mode==='auto'){showAnswer();setStepInfo('スタートボタンを押すと読み上げが始まります。');resetProgress();document.getElementById('displayCard').classList.remove('speaking');}
-  else if(mode==='practice'){practiceIdx=0;showTapNight(practiceIdx,false);setStepInfo('ハワイ語を見ながら「読み上げる」を押して声に出して練習しましょう。');}
-  else if(mode==='tap'){tapIdx=0;showTapNight(tapIdx,true);setStepInfo('数字と月の形を見て答えを考えてから「読み上げて答えを表示」を押してください。');}
+  if(mode==='auto'){showAnswer();setStepInfo('スタートボタンを押すと読み上げが始まります。');resetProgress();document.getElementById('displayCard').classList.remove('speaking');showMeaningCols(false);}
+  else if(mode==='practice'){practiceIdx=0;showTapNight(practiceIdx,false);updateMeaning(nights[0].n);showMeaningCols(true);setStepInfo('ハワイ語を見ながら「読み上げる」を押して声に出して練習しましょう。');}
+  else if(mode==='tap'){tapIdx=0;showTapNight(tapIdx,true);showMeaningCols(false);setStepInfo('数字と月の形を見て答えを考えてから「読み上げて答えを表示」を押してください。');}
 }
 function selectStep(s){
   stopPlayback();currentStep=s;
@@ -235,7 +335,7 @@ async function startPlayback(){
 }
 function practiceNav(dir){
   window.speechSynthesis.cancel();practiceIdx=Math.max(0,Math.min(29,practiceIdx+dir));
-  const night=nights[practiceIdx];updateDisplay(night);updateProgress(practiceIdx);showAnswer();
+  const night=nights[practiceIdx];updateDisplay(night);updateProgress(practiceIdx);showAnswer();updateMeaning(night.n);
   document.getElementById('practiceSpeakBtn').classList.remove('speaking');
   document.getElementById('practiceSpeakBtn').textContent='🔊 読み上げる';
   setStepInfo((practiceIdx+1)+'番「'+night.hw+'」を表示中。');
@@ -248,7 +348,7 @@ async function practiceSpeak(){
   btn.classList.remove('speaking');btn.textContent='🔊 読み上げる';
   document.getElementById('displayCard').classList.remove('speaking');
   setStepInfo('✅ '+night.n+'番「'+night.hw+'（'+night.kana+'）」');
-  if(practiceIdx<29){practiceIdx++;const next=nights[practiceIdx];updateDisplay(next);updateProgress(practiceIdx);showAnswer();setStepInfo((practiceIdx+1)+'番「'+next.hw+'」へ移動しました。');}
+  if(practiceIdx<29){practiceIdx++;const next=nights[practiceIdx];updateDisplay(next);updateProgress(practiceIdx);showAnswer();updateMeaning(next.n);setStepInfo((practiceIdx+1)+'番「'+next.hw+'」へ移動しました。');}
 }
 function hideAnswer(){document.getElementById('hawaiiName').classList.add('hidden');document.getElementById('kanaName').classList.add('hidden');}
 function showAnswer(){document.getElementById('hawaiiName').classList.remove('hidden');document.getElementById('kanaName').classList.remove('hidden');}
