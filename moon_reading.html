@@ -942,10 +942,64 @@ function newMoonJDE(k){
     +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
     -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
 }
-const D=86400000;
+// ══════════════════════════════════════════════════════════════
+// ハワイアンムーン コアロジック v3
+// 
+// 【2方式の仕組み】
+//   仮方式（自動計算）: 天文計算でMukuを決定 → 全年対応
+//   確定版（先生優先）: SENSEI_OVERRIDESで上書き → 毎年10月更新
+//
+// 【仮方式ルール】
+//   Muku(30)  = 新月のJST日付
+//   Hilo(1)   = Muku + 1日
+//   Lono(28)  = Muku - 1日（常に）
+//   Mauli(29) = Muku - 1日（Mauliありのみ）← Lonoと同日
+//   hasMauli  = (今Muku - 前Muku).days === 30
+//   第1〜28夜 = Hilo + 0〜27日
+//
+// 【確定版テーブル】
+//   先生から確定版が届いたらSENSEI_OVERRIDESに追加する
+//   キー = "YYYY-MM"（Hiloが属する月）
+//   値   = { muku: "YYYY-MM-DD", hasMauli: bool }
+// ══════════════════════════════════════════════════════════════
+
+// ── 先生確定版テーブル ────────────────────────────────────────
+// ※ 毎年10月頃に先生から確定版が届いたら追加する
+const SENSEI_OVERRIDES = {
+  // 2026年 先生確定版
+  '2026-08': { muku: '2026-08-12', hasMauli: false },
+  '2026-09': { muku: '2026-09-11', hasMauli: true  },
+  '2026-10': { muku: '2026-10-10', hasMauli: false },
+  '2026-11': { muku: '2026-11-09', hasMauli: true  },
+  '2026-12': { muku: '2026-12-09', hasMauli: true  },
+  // 2027年確定版が届いたらここに追加:
+  // '2027-01': { muku: '2027-01-??', hasMauli: ? },
+};
+
+// ── 天文計算（Meeus） ─────────────────────────────────────────
+const D = 86400000;
+
+function newMoonJDE(k){
+  const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
+  const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
+  const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+  const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+  const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+  const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+  const s=Math.sin,E2=E*E;
+  return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+    -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+    +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+    -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+    -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+    -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+    +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+    +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+    -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
+}
 function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
 
-// ── 新月リスト（JST日付＋時刻） ──────────────────────────────
+// ── 新月リスト（JST日付ms、時刻切り捨て） ─────────────────────
 const nmCache={};
 function getNM(y){
   if(nmCache[y]) return nmCache[y];
@@ -953,54 +1007,99 @@ function getNM(y){
   for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
     const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
     const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
-    if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
+    if(!seen.has(ms)){seen.add(ms);list.push(ms);}
   }
-  return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
+  return nmCache[y]=list.sort((a,b)=>a-b);
 }
-function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
+function nmNear(y){
+  const merged=getNM(y-1).concat(getNM(y),getNM(y+1));
+  const seen=new Set();
+  return merged.filter(ms=>seen.has(ms)?false:seen.add(ms)).sort((a,b)=>a-b);
+}
 
-// ── ハワイアンムーン コアロジック ────────────────────────────
-// Hilo = 新月JST時刻が06:00前→当日、以降→翌日
-function getHiloMs(nm){return nm.jstHour<6 ? nm.ms : nm.ms+D;}
+// ── 先生確定版を優先したMuku取得 ──────────────────────────────
+// Hiloが属する月（YYYY-MM）でSENSEI_OVERRIDESを引く
+function getSenseiOverride(hiloMs){
+  const d=new Date(hiloMs);
+  const key=d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+  return SENSEI_OVERRIDES[key]||null;
+}
 
-// 指定年月を含むサイクルを返す
+// ── サイクル検索（指定年月にHiloが属するサイクル） ─────────────
 function findCycle(y,m){
-  const s=Date.UTC(y,m-1,1),list=nmNear(y);
-  for(let i=0;i<list.length-1;i++){
-    if(list[i].ms+D>=s) return{nm:list[i],nextNm:list[i+1]};
+  const monthStart=Date.UTC(y,m-1,1);
+  const monthEnd=Date.UTC(m<12?y:y+1,m<12?m:0,1);
+  const list=nmNear(y);
+
+  for(let i=1;i<list.length;i++){
+    const prevNm=list[i-1], nm=list[i];
+    // 仮方式でのHilo
+    const hiloMs=prevNm+D;
+    if(hiloMs<monthStart||hiloMs>=monthEnd) continue;
+
+    // 先生確定版があれば上書き
+    const override=getSenseiOverride(hiloMs);
+    if(override){
+      const mukuMs=new Date(override.muku).getTime();
+      return { prevNm:mukuMs-D, nm:mukuMs, hasMauli:override.hasMauli, isConfirmed:true };
+    }
+
+    // 仮方式
+    const interval=Math.round((nm-prevNm)/D);
+    const hasMauli=(interval===30);
+    return { prevNm, nm, hasMauli, isConfirmed:false };
   }
   return null;
 }
 
-// 指定日の夜番号(1-30)を返す
-// Mauli有無はHilo間隔で判定、純粋カウント（逆算なし）
+// ── ±1月移動 ──────────────────────────────────────────────────
+function adjCycle(cycle,dir){
+  const hiloMs=cycle.prevNm+D;
+  const d=new Date(hiloMs);
+  let y=d.getUTCFullYear(),m=d.getUTCMonth()+1+dir;
+  if(m>12){m=1;y++;}else if(m<1){m=12;y--;}
+  return findCycle(y,m);
+}
+
+// ── 夜番号取得（1-30） ────────────────────────────────────────
 function getMoonNight(year,month,day){
   const target=Date.UTC(year,month-1,day);
-  const list=nmNear(year);
-  let nmIdx=-1;
-  for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
-  if(nmIdx<0||nmIdx>=list.length-1) return null;
-  const nm=list[nmIdx],nextNm=list[nmIdx+1];
-  const hiloMs=getHiloMs(nm);
-  const nextHiloMs=getHiloMs(nextNm);
-  const hasMauli=Math.round((nextHiloMs-hiloMs)/D)===30;
-  // Hiloより前の日はMuku(30)またはMauli(29)
-  if(target<hiloMs){
-    const diff=Math.round((hiloMs-target)/D);
-    if(diff===1) return 30; // Muku
-    if(diff===2&&hasMauli) return 29; // Mauli
+  // findCycleで当該サイクルを特定
+  // targetを含む月でまず探し、前後も試みる
+  for(let dm=-1;dm<=1;dm++){
+    let m=month+dm, y=year;
+    if(m<1){m=12;y--;}if(m>12){m=1;y++;}
+    const cy=findCycle(y,m);
+    if(!cy) continue;
+    const {prevNm,nm,hasMauli}=cy;
+    const hiloMs=prevNm+D;
+    // このサイクルの範囲: prevNm(Muku) 〜 nm(Muku)
+    if(target<prevNm||target>nm) continue;
+    if(target===nm) return 30;          // Muku
+    if(target===nm-D&&hasMauli) return 29; // Mauli
+    const offset=Math.round((target-hiloMs)/D);
+    if(offset>=0&&offset<=27) return offset+1; // 1〜28
     return null;
   }
-  // Hilo以降は純粋カウント
-  let offset=Math.round((target-hiloMs)/D);
-  if(!hasMauli&&offset>=28) offset++; // 第29夜スキップ
-  const n=offset+1;
-  return(n>=1&&n<=30)?n:null;
+  return null;
+}
+
+// ── 30夜マップ生成 ────────────────────────────────────────────
+function buildDayMap(cycle){
+  const{prevNm,nm,hasMauli}=cycle;
+  const today=Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+  const hiloMs=prevNm+D;
+  const map={};
+  for(let i=0;i<28;i++){
+    const ms=hiloMs+i*D;
+    map[i+1]={ms,isToday:ms===today};
+  }
+  map[29]=hasMauli?{ms:nm-D,isToday:(nm-D)===today}:null;
+  map[30]={ms:nm,isToday:nm===today};
+  return map;
 }
 
 
-  
-// getMoonAge互換（月相SVG用）
 function getMoonAge(year, month, day){
   const target = Date.UTC(year, month-1, day);
   const list = nmNear(year);

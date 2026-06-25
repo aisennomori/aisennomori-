@@ -374,4 +374,302 @@ updateDisplay(nights[0]);showAnswer();
 document.getElementById('speedLabel').textContent=stepConfigs[1].desc;
 </script>
 </body>
+// ══════════════════════════════════════════════════════════════
+// ハワイアンムーン コアロジック v3
+// 
+// 【2方式の仕組み】
+//   仮方式（自動計算）: 天文計算でMukuを決定 → 全年対応
+//   確定版（先生優先）: SENSEI_OVERRIDESで上書き → 毎年10月更新
+//
+// 【仮方式ルール】
+//   Muku(30)  = 新月のJST日付
+//   Hilo(1)   = Muku + 1日
+//   Lono(28)  = Muku - 1日（常に）
+//   Mauli(29) = Muku - 1日（Mauliありのみ）← Lonoと同日
+//   hasMauli  = (今Muku - 前Muku).days === 30
+//   第1〜28夜 = Hilo + 0〜27日
+//
+// 【確定版テーブル】
+//   先生から確定版が届いたらSENSEI_OVERRIDESに追加する
+//   キー = "YYYY-MM"（Hiloが属する月）
+//   値   = { muku: "YYYY-MM-DD", hasMauli: bool }
+// ══════════════════════════════════════════════════════════════
+
+// ── 先生確定版テーブル ────────────────────────────────────────
+// ※ 毎年10月頃に先生から確定版が届いたら追加する
+const SENSEI_OVERRIDES = {
+  // 2026年 先生確定版
+  '2026-08': { muku: '2026-08-12', hasMauli: false },
+  '2026-09': { muku: '2026-09-11', hasMauli: true  },
+  '2026-10': { muku: '2026-10-10', hasMauli: false },
+  '2026-11': { muku: '2026-11-09', hasMauli: true  },
+  '2026-12': { muku: '2026-12-09', hasMauli: true  },
+  // 2027年確定版が届いたらここに追加:
+  // '2027-01': { muku: '2027-01-??', hasMauli: ? },
+};
+
+// ── 天文計算（Meeus） ─────────────────────────────────────────
+const D = 86400000;
+
+function newMoonJDE(k){
+  const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
+  const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
+  const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+  const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+  const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+  const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+  const s=Math.sin,E2=E*E;
+  return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+    -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+    +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+    -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+    -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+    -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+    +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+    +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+    -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
+}
+function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
+
+// ── 新月リスト（JST日付ms、時刻切り捨て） ─────────────────────
+const nmCache={};
+function getNM(y){
+  if(nmCache[y]) return nmCache[y];
+  const seen=new Set(),list=[];
+  for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
+    const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
+    const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+    if(!seen.has(ms)){seen.add(ms);list.push(ms);}
+  }
+  return nmCache[y]=list.sort((a,b)=>a-b);
+}
+function nmNear(y){
+  const merged=getNM(y-1).concat(getNM(y),getNM(y+1));
+  const seen=new Set();
+  return merged.filter(ms=>seen.has(ms)?false:seen.add(ms)).sort((a,b)=>a-b);
+}
+
+// ── 先生確定版を優先したMuku取得 ──────────────────────────────
+// Hiloが属する月（YYYY-MM）でSENSEI_OVERRIDESを引く
+function getSenseiOverride(hiloMs){
+  const d=new Date(hiloMs);
+  const key=d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+  return SENSEI_OVERRIDES[key]||null;
+}
+
+// ── サイクル検索（指定年月にHiloが属するサイクル） ─────────────
+function findCycle(y,m){
+  const monthStart=Date.UTC(y,m-1,1);
+  const monthEnd=Date.UTC(m<12?y:y+1,m<12?m:0,1);
+  const list=nmNear(y);
+
+  for(let i=1;i<list.length;i++){
+    const prevNm=list[i-1], nm=list[i];
+    // 仮方式でのHilo
+    const hiloMs=prevNm+D;
+    if(hiloMs<monthStart||hiloMs>=monthEnd) continue;
+
+    // 先生確定版があれば上書き
+    const override=getSenseiOverride(hiloMs);
+    if(override){
+      const mukuMs=new Date(override.muku).getTime();
+      return { prevNm:mukuMs-D, nm:mukuMs, hasMauli:override.hasMauli, isConfirmed:true };
+    }
+
+    // 仮方式
+    const interval=Math.round((nm-prevNm)/D);
+    const hasMauli=(interval===30);
+    return { prevNm, nm, hasMauli, isConfirmed:false };
+  }
+  return null;
+}
+
+// ── ±1月移動 ──────────────────────────────────────────────────
+function adjCycle(cycle,dir){
+  const hiloMs=cycle.prevNm+D;
+  const d=new Date(hiloMs);
+  let y=d.getUTCFullYear(),m=d.getUTCMonth()+1+dir;
+  if(m>12){m=1;y++;}else if(m<1){m=12;y--;}
+  return findCycle(y,m);
+}
+
+// ── 夜番号取得（1-30） ────────────────────────────────────────
+function getMoonNight(year,month,day){
+  const target=Date.UTC(year,month-1,day);
+  // findCycleで当該サイクルを特定
+  // targetを含む月でまず探し、前後も試みる
+  for(let dm=-1;dm<=1;dm++){
+    let m=month+dm, y=year;
+    if(m<1){m=12;y--;}if(m>12){m=1;y++;}
+    const cy=findCycle(y,m);
+    if(!cy) continue;
+    const {prevNm,nm,hasMauli}=cy;
+    const hiloMs=prevNm+D;
+    // このサイクルの範囲: prevNm(Muku) 〜 nm(Muku)
+    if(target<prevNm||target>nm) continue;
+    if(target===nm) return 30;          // Muku
+    if(target===nm-D&&hasMauli) return 29; // Mauli
+    const offset=Math.round((target-hiloMs)/D);
+    if(offset>=0&&offset<=27) return offset+1; // 1〜28
+    return null;
+  }
+  return null;
+}
+
+// ── 30夜マップ生成 ────────────────────────────────────────────
+function buildDayMap(cycle){
+  const{prevNm,nm,hasMauli}=cycle;
+  const today=Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+  const hiloMs=prevNm+D;
+  const map={};
+  for(let i=0;i<28;i++){
+    const ms=hiloMs+i*D;
+    map[i+1]={ms,isToday:ms===today};
+  }
+  map[29]=hasMauli?{ms:nm-D,isToday:(nm-D)===today}:null;
+  map[30]={ms:nm,isToday:nm===today};
+  return map;
+}
+
+
+const stepConfigs={
+  1:{label:"ランダム",desc:"ランダム：30夜をシャッフルして読み上げます",rate:0.85,pause:1800},
+  2:{label:"普通",desc:"普通：ハワイ語を普通のスピードで読み上げます",rate:1.0,pause:1400},
+  3:{label:"まとめ",desc:"まとめ読み：30夜を一息で。儀式のように読みます",rate:1.1,pause:700},
+};
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let currentMode='auto',currentStep=1,isPlaying=false,stopRequested=false,tapIdx=0,practiceIdx=0;
+let _iconUid=0;
+function moonIconSVG(dayIdx,size){
+  size=size||72;_iconUid++;const id='mc'+_iconUid;const r=size/2-3;const cx=size/2,cy=size/2;
+  const DARK='#2E2A24',LIGHT='#F6CE5B';
+  const theta=(dayIdx/30)*2*Math.PI;const dx=r*(1+Math.cos(theta));const dir=dayIdx<15?1:-1;const lightCx=cx+dir*dx;
+  return`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs><circle cx="${cx}" cy="${cy}" r="${r}" fill="${DARK}"/><circle cx="${lightCx}" cy="${cy}" r="${r}" fill="${LIGHT}" clip-path="url(#${id})"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/></svg>`;
+}
+function updateDisplay(night){
+  document.getElementById('moonSvgWrap').innerHTML=moonIconSVG(night.dayIdx,72);
+  document.getElementById('nightNum').textContent=night.n;
+  document.getElementById('hawaiiName').textContent=night.hw;
+  document.getElementById('kanaName').textContent=night.kana;
+  document.getElementById('phaseLabel').textContent=night.phase;
+}
+function updateProgress(idx){
+  const pct=Math.round(((idx+1)/30)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressText').textContent=(idx+1)+' / 30';
+  document.getElementById('progressPct').textContent=pct+'%';
+}
+function resetProgress(){
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('progressText').textContent='0 / 30';
+  document.getElementById('progressPct').textContent='';
+}
+function setStepInfo(text){document.getElementById('stepInfo').textContent=text;}
+
+function updateMeaning(n){
+  const d=NIGHT_DATA[n];
+  if(!d) return;
+  document.getElementById('clShort').textContent=d.short;
+  document.getElementById('clDetail').textContent=d.detail;
+  document.getElementById('crNature').textContent=d.nature;
+  document.getElementById('crCulture').textContent=d.culture;
+  document.getElementById('crSpirit').textContent=d.spirit;
+}
+function showMeaningCols(show){
+  const v=show?'visible':'hidden';
+  document.getElementById('cardLeft').style.visibility=v;
+  document.getElementById('cardRight').style.visibility=v;
+}
+function switchMode(mode){
+  stopPlayback();currentMode=mode;
+  document.getElementById('tabAuto').classList.toggle('active',mode==='auto');
+  document.getElementById('tabPractice').classList.toggle('active',mode==='practice');
+  document.getElementById('tabTap').classList.toggle('active',mode==='tap');
+  document.getElementById('autoControls').style.display=mode==='auto'?'':'none';
+  document.getElementById('practiceControls').style.display=mode==='practice'?'':'none';
+  document.getElementById('tapControls').style.display=mode==='tap'?'':'none';
+  if(mode==='auto'){showAnswer();setStepInfo('スタートボタンを押すと読み上げが始まります。');resetProgress();document.getElementById('displayCard').classList.remove('speaking');showMeaningCols(false);}
+  else if(mode==='practice'){practiceIdx=0;showTapNight(practiceIdx,false);updateMeaning(nights[0].n);showMeaningCols(true);setStepInfo('ハワイ語を見ながら「読み上げる」を押して声に出して練習しましょう。');}
+  else if(mode==='tap'){tapIdx=0;showTapNight(tapIdx,true);showMeaningCols(false);setStepInfo('数字と月の形を見て答えを考えてから「読み上げて答えを表示」を押してください。');}
+}
+function selectStep(s){
+  stopPlayback();currentStep=s;
+  [1,2,3].forEach(i=>{document.getElementById('stepBtn'+i).classList.toggle('active',i===s);});
+  document.getElementById('speedLabel').textContent=stepConfigs[s].desc;
+  setStepInfo('スタートボタンを押すと読み上げが始まります。');resetProgress();
+}
+function speak(text,rate,lang='en-US'){return new Promise((resolve)=>{const u=new SpeechSynthesisUtterance(text);u.lang=lang;u.rate=rate;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u);});}
+function speakNumber(n,rate){return new Promise((resolve)=>{const u=new SpeechSynthesisUtterance(String(n));u.lang='ja-JP';u.rate=rate;u.onend=resolve;u.onerror=resolve;window.speechSynthesis.speak(u);});}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function togglePlay(){if(isPlaying){stopPlayback();return;}startPlayback();}
+function stopPlayback(){
+  stopRequested=true;isPlaying=false;window.speechSynthesis.cancel();
+  document.getElementById('playBtn').textContent='▶ スタート';
+  document.getElementById('playBtn').className='play-btn start';
+  document.getElementById('displayCard').classList.remove('speaking');
+}
+async function startPlayback(){
+  stopRequested=false;isPlaying=true;
+  document.getElementById('playBtn').textContent='⏹ ストップ';
+  document.getElementById('playBtn').className='play-btn stop';
+  const cfg=stepConfigs[currentStep];const isRandom=(currentStep===1);
+  const queue=isRandom?shuffle(nights):nights;
+  setStepInfo('再生中...'+(isRandom?'🔀 ランダム順':'第'+currentStep+'ステップ「'+cfg.label+'」'));
+  for(let i=0;i<queue.length;i++){
+    if(stopRequested)break;const night=queue[i];updateDisplay(night);
+    const pct=Math.round(((i+1)/30)*100);
+    document.getElementById('progressFill').style.width=pct+'%';
+    document.getElementById('progressText').textContent=(i+1)+' / 30';
+    document.getElementById('progressPct').textContent=pct+'%';
+    document.getElementById('displayCard').classList.add('speaking');
+    await speakNumber(night.n,cfg.rate);if(stopRequested)break;
+    await sleep(1000);if(stopRequested)break;
+    await speak(night.hwRead,cfg.rate,'en-US');if(stopRequested)break;
+    document.getElementById('displayCard').classList.remove('speaking');
+    await sleep(cfg.pause);
+  }
+  if(!stopRequested){setStepInfo('✅ 完了！お疲れ様でした。');document.getElementById('playBtn').textContent='▶ もう一度';document.getElementById('playBtn').className='play-btn start';}
+  isPlaying=false;
+}
+function practiceNav(dir){
+  window.speechSynthesis.cancel();practiceIdx=Math.max(0,Math.min(29,practiceIdx+dir));
+  const night=nights[practiceIdx];updateDisplay(night);updateProgress(practiceIdx);showAnswer();updateMeaning(night.n);
+  document.getElementById('practiceSpeakBtn').classList.remove('speaking');
+  document.getElementById('practiceSpeakBtn').textContent='🔊 読み上げる';
+  setStepInfo((practiceIdx+1)+'番「'+night.hw+'」を表示中。');
+}
+async function practiceSpeak(){
+  window.speechSynthesis.cancel();const night=nights[practiceIdx];
+  const btn=document.getElementById('practiceSpeakBtn');btn.classList.add('speaking');btn.textContent='🔊 読み上げ中...';
+  document.getElementById('displayCard').classList.add('speaking');
+  await speakNumber(night.n,0.9);await sleep(1000);await speak(night.hwRead,0.85,'en-US');
+  btn.classList.remove('speaking');btn.textContent='🔊 読み上げる';
+  document.getElementById('displayCard').classList.remove('speaking');
+  setStepInfo('✅ '+night.n+'番「'+night.hw+'（'+night.kana+'）」');
+  if(practiceIdx<29){practiceIdx++;const next=nights[practiceIdx];updateDisplay(next);updateProgress(practiceIdx);showAnswer();updateMeaning(next.n);setStepInfo((practiceIdx+1)+'番「'+next.hw+'」へ移動しました。');}
+}
+function hideAnswer(){document.getElementById('hawaiiName').classList.add('hidden');document.getElementById('kanaName').classList.add('hidden');}
+function showAnswer(){document.getElementById('hawaiiName').classList.remove('hidden');document.getElementById('kanaName').classList.remove('hidden');}
+function showTapNight(idx,hideNames){const night=nights[idx];updateDisplay(night);updateProgress(idx);if(hideNames)hideAnswer();}
+function tapNav(dir){
+  window.speechSynthesis.cancel();tapIdx=Math.max(0,Math.min(29,tapIdx+dir));
+  showTapNight(tapIdx,false);
+  document.getElementById('tapSpeakBtn').classList.remove('speaking');
+  document.getElementById('tapSpeakBtn').textContent='🔊 読み上げて答えを表示';
+  setStepInfo((tapIdx+1)+'夜目を表示中。');
+}
+async function tapSpeak(){
+  window.speechSynthesis.cancel();const night=nights[tapIdx];
+  const btn=document.getElementById('tapSpeakBtn');btn.classList.add('speaking');btn.textContent='🔊 読み上げ中...';
+  document.getElementById('displayCard').classList.add('speaking');showAnswer();
+  await speakNumber(night.n,0.9);await sleep(1000);await speak(night.hwRead,0.85,'en-US');
+  btn.classList.remove('speaking');btn.textContent='🔊 読み上げて答えを表示';
+  document.getElementById('displayCard').classList.remove('speaking');
+  setStepInfo('✅ '+night.n+'番「'+night.hw+'（'+night.kana+'）」');
+  if(tapIdx<29){tapIdx++;showTapNight(tapIdx,true);}
+}
+updateDisplay(nights[0]);showAnswer();
+document.getElementById('speedLabel').textContent=stepConfigs[1].desc;
+</script>
+</body>
 </html>

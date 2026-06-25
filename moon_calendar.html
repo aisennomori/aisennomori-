@@ -15,18 +15,19 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{background:var(--bg);color:var(--ink);font-family:var(--fb);}
 
-  /* 戻るリンク */
-  .back-link{display:inline-block;font-size:.72rem;color:#CFC4AE;
-    text-decoration:none;letter-spacing:.06em;margin-bottom:8px;opacity:.85;}
-  .back-link:hover{opacity:1;color:#F7F1E4;}
-
   /* ヘッダー */
   .hdr{background:linear-gradient(180deg,#3E3A33,#4A4339);color:#F7F1E4;
     padding:18px 16px 20px;border-radius:0 0 20px 20px;}
   .hdr h1{font-family:var(--fd);font-size:1.2rem;font-weight:700;letter-spacing:.04em;margin-bottom:2px;}
   .hdr .sub{font-size:.7rem;color:#CFC4AE;letter-spacing:.08em;}
 
-
+  /* 今日 */
+  .today-bar{margin-top:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+  .today-icon{font-size:1.8rem;line-height:1;}
+  .today-lbl{font-size:.64rem;color:#CFC4AE;letter-spacing:.07em;}
+  .today-nm{font-family:var(--fd);font-weight:700;font-size:.9rem;color:#FBF6EC;}
+  .today-nm .kana{font-weight:400;font-size:.72rem;color:#D8CDB8;margin-left:5px;}
 
   /* ナビ */
   .nav{display:flex;align-items:center;gap:8px;margin:14px 12px 10px;}
@@ -36,16 +37,6 @@
   .nbtn:active{background:var(--line);}
   .ntitle{flex:1;text-align:center;font-family:var(--fd);font-weight:700;
     font-size:1.1rem;letter-spacing:.04em;}
-
-  /* 年月ジャンプ */
-  .jump-bar{display:flex;align-items:center;gap:8px;margin:-4px 12px 10px;justify-content:center;}
-  .jump-bar select{font-family:var(--fb);font-size:.88rem;color:var(--ink);
-    border:1px solid var(--line);border-radius:8px;padding:6px 10px;
-    background:var(--card);cursor:pointer;}
-  .jump-bar button{font-family:var(--fd);font-weight:700;font-size:.85rem;
-    color:#FBF6EC;background:var(--ink);border:none;border-radius:8px;
-    padding:7px 14px;cursor:pointer;letter-spacing:.04em;}
-  .jump-bar button:active{opacity:.85;}
 
   /* カレンダー枠 */
   .cal-wrap{margin:0 12px;background:var(--card);border:1px solid var(--line);
@@ -98,35 +89,28 @@
   .phint{text-align:center;font-size:.67rem;color:var(--soft);margin:6px 0 24px;}
   @media print{
     .hdr{background:none;color:var(--ink);border-radius:0;}
-    .nav,.leg,.pbtn,.phint{display:none;}
+    .today-bar,.nav,.leg,.pbtn,.phint{display:none;}
     .cal-wrap{border:none;border-radius:0;margin:0;}
   }
 </style>
 </head>
 <body>
 <header class="hdr">
-  <a href="https://aisennomori.github.io/aisennomori-/moon_tools.html" class="back-link">← 月読みツール集へ戻る</a>
   <h1>🌙 ハワイアン・ムーン・カレンダー</h1>
   <p class="sub">愛泉の杜 ─ Spirit Tools</p>
-
+  <div class="today-bar">
+    <div class="today-icon" id="tIcon">🌕</div>
+    <div>
+      <div class="today-lbl" id="tLbl">今日の月</div>
+      <div class="today-nm" id="tNm">─</div>
+    </div>
+  </div>
 </header>
 
 <div class="nav">
   <button class="nbtn" id="prevBtn">←</button>
   <div class="ntitle" id="navTitle">─</div>
   <button class="nbtn" id="nextBtn">→</button>
-</div>
-<div class="jump-bar">
-  <select id="jumpYear"></select>
-  <select id="jumpMonth">
-    <option value="1">1月</option><option value="2">2月</option>
-    <option value="3">3月</option><option value="4">4月</option>
-    <option value="5">5月</option><option value="6">6月</option>
-    <option value="7">7月</option><option value="8">8月</option>
-    <option value="9">9月</option><option value="10">10月</option>
-    <option value="11">11月</option><option value="12">12月</option>
-  </select>
-  <button id="jumpBtn">表示</button>
 </div>
 
 <div class="cal-wrap">
@@ -159,38 +143,82 @@
 const MD=[null,
   {n:1, name:'Hilo',         kana:'ヒロ',          icon:'🌑',g:'wax'},
   {n:2, name:'Hoaka',        kana:'ホアカ',         icon:'🌒',g:'wax'},
-  {n:3, name:'Ku-kahi',      kana:'クーカヒ',       icon:'🌒',g:'wax'},
-  {n:4, name:'Ku-lua',       kana:'クールア',        icon:'🌒',g:'wax'},
-  {n:5, name:'Ku-kolu',      kana:'クーコル',        icon:'🌓',g:'wax'},
-  {n:6, name:'Ku-pau',       kana:'クーパウ',        icon:'🌓',g:'wax'},
-  {n:7, name:'Ole-ku-kahi',  kana:'オレクーカヒ',    icon:'🌔',g:'wax'},
-  {n:8, name:'Ole-ku-lua',   kana:'オレクールア',    icon:'🌔',g:'wax'},
-  {n:9, name:'Ole-ku-kolu',  kana:'オレクーコル',    icon:'🌔',g:'wax'},
-  {n:10,name:'Ole-pau',      kana:'オレパウ',        icon:'🌔',g:'wax'},
+  {n:3, name:'Kū-kahi',      kana:'クーカヒ',       icon:'🌒',g:'wax'},
+  {n:4, name:'Kū-lua',       kana:'クールア',        icon:'🌒',g:'wax'},
+  {n:5, name:'Kū-kolu',      kana:'クーコル',        icon:'🌓',g:'wax'},
+  {n:6, name:'Kū-pau',       kana:'クーパウ',        icon:'🌓',g:'wax'},
+  {n:7, name:'ʻOle-kū-kahi',  kana:'オレクーカヒ',    icon:'🌔',g:'wax'},
+  {n:8, name:'ʻOle-kū-lua',   kana:'オレクールア',    icon:'🌔',g:'wax'},
+  {n:9, name:'ʻOle-kū-kolu',  kana:'オレクーコル',    icon:'🌔',g:'wax'},
+  {n:10,name:'ʻOle-pau',      kana:'オレパウ',        icon:'🌔',g:'wax'},
   {n:11,name:'Huna',         kana:'フナ',           icon:'🌔',g:'full'},
-  {n:12,name:'Mohalu',       kana:'モーハル',        icon:'🌕',g:'full'},
+  {n:12,name:'Mōhalu',       kana:'モーハル',        icon:'🌕',g:'full'},
   {n:13,name:'Hua',          kana:'ファア',          icon:'🌕',g:'full'},
   {n:14,name:'Akua',         kana:'アクア',          icon:'🌕',g:'full'},
   {n:15,name:'Hoku',         kana:'ホク',           icon:'🌕',g:'full'},
-  {n:16,name:'Mahealani',    kana:'マヘアラニ',      icon:'🌕',g:'full'},
+  {n:16,name:'Māhealani',    kana:'マヘアラニ',      icon:'🌕',g:'full'},
   {n:17,name:'Kulu',         kana:'クル',           icon:'🌖',g:'full'},
-  {n:18,name:'Laau-ku-kahi', kana:'ラーアウクーカヒ',icon:'🌖',g:'full'},
-  {n:19,name:'Laau-ku-lua',  kana:'ラーアウクールア',icon:'🌗',g:'full'},
-  {n:20,name:'Laau-pau',     kana:'ラーアウパウ',    icon:'🌗',g:'full'},
-  {n:21,name:'Ole-ku-kahi',  kana:'オレクーカヒ',    icon:'🌗',g:'wan'},
-  {n:22,name:'Ole-ku-lua',   kana:'オレクールア',    icon:'🌗',g:'wan'},
-  {n:23,name:'Ole-pau',      kana:'オレパウ',        icon:'🌘',g:'wan'},
-  {n:24,name:'Kaloa-ku-kahi',kana:'カーロアクーカヒ',icon:'🌘',g:'wan'},
-  {n:25,name:'Kaloa-ku-lua', kana:'カーロアクールア',icon:'🌘',g:'wan'},
-  {n:26,name:'Kaloa-pau',    kana:'カーロアパウ',    icon:'🌘',g:'wan'},
-  {n:27,name:'Kane',         kana:'カーネ',          icon:'🌘',g:'wan'},
+  {n:18,name:'Lāʻau-kū-kahi', kana:'ラーアウクーカヒ',icon:'🌖',g:'full'},
+  {n:19,name:'Lāʻau-kū-lua',  kana:'ラーアウクールア',icon:'🌗',g:'full'},
+  {n:20,name:'Lāʻau-pau',     kana:'ラーアウパウ',    icon:'🌗',g:'full'},
+  {n:21,name:'ʻOle-kū-kahi',  kana:'オレクーカヒ',    icon:'🌗',g:'wan'},
+  {n:22,name:'ʻOle-kū-lua',   kana:'オレクールア',    icon:'🌗',g:'wan'},
+  {n:23,name:'ʻOle-pau',      kana:'オレパウ',        icon:'🌘',g:'wan'},
+  {n:24,name:'Kāloa-kū-kahi',kana:'カーロアクーカヒ',icon:'🌘',g:'wan'},
+  {n:25,name:'Kāloa-kū-lua', kana:'カーロアクールア',icon:'🌘',g:'wan'},
+  {n:26,name:'Kāloa-pau',    kana:'カーロアパウ',    icon:'🌘',g:'wan'},
+  {n:27,name:'Kāne',         kana:'カーネ',          icon:'🌘',g:'wan'},
   {n:28,name:'Lono',         kana:'ロノ',           icon:'🌑',g:'wan'},
   {n:29,name:'Mauli',        kana:'マウリ',          icon:'🌑',g:'wan'},
   {n:30,name:'Muku',         kana:'ムク',           icon:'🌑',g:'wan'},
 ];
 
 // ── 天文計算 ─────────────────────────────────────────────────
-const D=86400000;
+// ── ハワイアンムーン 確定コアロジック v2 ──────────────────────
+// Muku(30)  = 新月の日付（JST、時刻切り捨て）
+// Hilo(1)   = Muku + 1日
+// hasMauli  = (今の新月 - 前の新月).days == 30
+// Mauli(29) = Muku - 1日（Mauliありのみ）
+// 第1〜28夜 = Hilo + 0〜27日
+// ────────────────────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// ハワイアンムーン コアロジック v3
+// 
+// 【2方式の仕組み】
+//   仮方式（自動計算）: 天文計算でMukuを決定 → 全年対応
+//   確定版（先生優先）: SENSEI_OVERRIDESで上書き → 毎年10月更新
+//
+// 【仮方式ルール】
+//   Muku(30)  = 新月のJST日付
+//   Hilo(1)   = Muku + 1日
+//   Lono(28)  = Muku - 1日（常に）
+//   Mauli(29) = Muku - 1日（Mauliありのみ）← Lonoと同日
+//   hasMauli  = (今Muku - 前Muku).days === 30
+//   第1〜28夜 = Hilo + 0〜27日
+//
+// 【確定版テーブル】
+//   先生から確定版が届いたらSENSEI_OVERRIDESに追加する
+//   キー = "YYYY-MM"（Hiloが属する月）
+//   値   = { muku: "YYYY-MM-DD", hasMauli: bool }
+// ══════════════════════════════════════════════════════════════
+
+// ── 先生確定版テーブル ────────────────────────────────────────
+// ※ 毎年10月頃に先生から確定版が届いたら追加する
+const SENSEI_OVERRIDES = {
+  // 2026年 先生確定版
+  '2026-08': { muku: '2026-08-12', hasMauli: false },
+  '2026-09': { muku: '2026-09-11', hasMauli: true  },
+  '2026-10': { muku: '2026-10-10', hasMauli: false },
+  '2026-11': { muku: '2026-11-09', hasMauli: true  },
+  '2026-12': { muku: '2026-12-09', hasMauli: true  },
+  // 2027年確定版が届いたらここに追加:
+  // '2027-01': { muku: '2027-01-??', hasMauli: ? },
+};
+
+// ── 天文計算（Meeus） ─────────────────────────────────────────
+const D = 86400000;
+
 function newMoonJDE(k){
   const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
   const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
@@ -210,6 +238,8 @@ function newMoonJDE(k){
     -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
 }
 function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
+
+// ── 新月リスト（JST日付ms、時刻切り捨て） ─────────────────────
 const nmCache={};
 function getNM(y){
   if(nmCache[y]) return nmCache[y];
@@ -217,36 +247,99 @@ function getNM(y){
   for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
     const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
     const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
-    if(!seen.has(ms)){seen.add(ms);list.push({ms,jstHour:jst.getUTCHours()});}
+    if(!seen.has(ms)){seen.add(ms);list.push(ms);}
   }
-  return nmCache[y]=list.sort((a,b)=>a.ms-b.ms);
+  return nmCache[y]=list.sort((a,b)=>a-b);
 }
-function nmNear(y){return getNM(y-1).concat(getNM(y),getNM(y+1));}
-function getHiloMs(nm){return nm.jstHour<6?nm.ms:nm.ms+D;}
+function nmNear(y){
+  const merged=getNM(y-1).concat(getNM(y),getNM(y+1));
+  const seen=new Set();
+  return merged.filter(ms=>seen.has(ms)?false:seen.add(ms)).sort((a,b)=>a-b);
+}
 
+// ── 先生確定版を優先したMuku取得 ──────────────────────────────
+// Hiloが属する月（YYYY-MM）でSENSEI_OVERRIDESを引く
+function getSenseiOverride(hiloMs){
+  const d=new Date(hiloMs);
+  const key=d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+  return SENSEI_OVERRIDES[key]||null;
+}
+
+// ── サイクル検索（指定年月にHiloが属するサイクル） ─────────────
+function findCycle(y,m){
+  const monthStart=Date.UTC(y,m-1,1);
+  const monthEnd=Date.UTC(m<12?y:y+1,m<12?m:0,1);
+  const list=nmNear(y);
+
+  for(let i=1;i<list.length;i++){
+    const prevNm=list[i-1], nm=list[i];
+    // 仮方式でのHilo
+    const hiloMs=prevNm+D;
+    if(hiloMs<monthStart||hiloMs>=monthEnd) continue;
+
+    // 先生確定版があれば上書き
+    const override=getSenseiOverride(hiloMs);
+    if(override){
+      const mukuMs=new Date(override.muku).getTime();
+      return { prevNm:mukuMs-D, nm:mukuMs, hasMauli:override.hasMauli, isConfirmed:true };
+    }
+
+    // 仮方式
+    const interval=Math.round((nm-prevNm)/D);
+    const hasMauli=(interval===30);
+    return { prevNm, nm, hasMauli, isConfirmed:false };
+  }
+  return null;
+}
+
+// ── ±1月移動 ──────────────────────────────────────────────────
+function adjCycle(cycle,dir){
+  const hiloMs=cycle.prevNm+D;
+  const d=new Date(hiloMs);
+  let y=d.getUTCFullYear(),m=d.getUTCMonth()+1+dir;
+  if(m>12){m=1;y++;}else if(m<1){m=12;y--;}
+  return findCycle(y,m);
+}
+
+// ── 夜番号取得（1-30） ────────────────────────────────────────
 function getMoonNight(year,month,day){
   const target=Date.UTC(year,month-1,day);
-  const list=nmNear(year);
-  let nmIdx=-1;
-  for(let i=0;i<list.length;i++){if(list[i].ms<=target)nmIdx=i;else break;}
-  if(nmIdx<0||nmIdx>=list.length-1) return null;
-  const nm=list[nmIdx],nextNm=list[nmIdx+1];
-  const hiloMs=getHiloMs(nm),nextHiloMs=getHiloMs(nextNm);
-  const hasMauli=Math.round((nextHiloMs-hiloMs)/D)===30;
-  if(target<hiloMs){
-    const diff=Math.round((hiloMs-target)/D);
-    if(diff===1) return 30;
-    if(diff===2&&hasMauli) return 29;
+  // findCycleで当該サイクルを特定
+  // targetを含む月でまず探し、前後も試みる
+  for(let dm=-1;dm<=1;dm++){
+    let m=month+dm, y=year;
+    if(m<1){m=12;y--;}if(m>12){m=1;y++;}
+    const cy=findCycle(y,m);
+    if(!cy) continue;
+    const {prevNm,nm,hasMauli}=cy;
+    const hiloMs=prevNm+D;
+    // このサイクルの範囲: prevNm(Muku) 〜 nm(Muku)
+    if(target<prevNm||target>nm) continue;
+    if(target===nm) return 30;          // Muku
+    if(target===nm-D&&hasMauli) return 29; // Mauli
+    const offset=Math.round((target-hiloMs)/D);
+    if(offset>=0&&offset<=27) return offset+1; // 1〜28
     return null;
   }
-  let offset=Math.round((target-hiloMs)/D);
-  if(!hasMauli&&offset>=28) offset++;
-  const n=offset+1;
-  return(n>=1&&n<=30)?n:null;
+  return null;
+}
+
+// ── 30夜マップ生成 ────────────────────────────────────────────
+function buildDayMap(cycle){
+  const{prevNm,nm,hasMauli}=cycle;
+  const today=Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate());
+  const hiloMs=prevNm+D;
+  const map={};
+  for(let i=0;i<28;i++){
+    const ms=hiloMs+i*D;
+    map[i+1]={ms,isToday:ms===today};
+  }
+  map[29]=hasMauli?{ms:nm-D,isToday:(nm-D)===today}:null;
+  map[30]={ms:nm,isToday:nm===today};
+  return map;
 }
 
 
-// マーカー（moon_techoと同じ）
 function markerForN(n){
   if(n>=1&&n<=3)  return'🔵';
   if(n>=7&&n<=10) return'❤️';
@@ -257,18 +350,21 @@ function markerForN(n){
 // ── 状態 ─────────────────────────────────────────────────────
 let cY,cM;
 
-// ── 年月セレクト初期化 ──────────────────────────────────────
+// ── 今日ウィジェット ─────────────────────────────────────────
 (function(){
-  const sel=document.getElementById('jumpYear');
   const now=new Date();
-  const cy=now.getFullYear();
-  for(let y=1930;y<=cy+10;y++){
-    const o=document.createElement('option');
-    o.value=y; o.textContent=y+'年';
-    if(y===cy) o.selected=true;
-    sel.appendChild(o);
+  const y=now.getFullYear(),m=now.getMonth()+1,d=now.getDate();
+  const n=getMoonNight(y,m,d);
+  const md=n?MD[n]:null;
+  const dow=['日','月','火','水','木','金','土'][now.getDay()];
+  document.getElementById('tLbl').textContent=`${y}年${m}月${d}日（${dow}）`;
+  if(md){
+    document.getElementById('tIcon').textContent=md.icon;
+    document.getElementById('tNm').innerHTML=
+      `第${n}夜 ${md.name}<span class="kana">${md.kana}</span>`;
+  } else {
+    document.getElementById('tNm').textContent='新月期';
   }
-  document.getElementById('jumpMonth').value=now.getMonth()+1;
 })();
 
 // ── カレンダー描画 ───────────────────────────────────────────
@@ -361,11 +457,6 @@ document.getElementById('nextBtn').addEventListener('click',()=>{
   render(y,m);
 });
 document.getElementById('pBtn').addEventListener('click',()=>window.print());
-document.getElementById('jumpBtn').addEventListener('click',()=>{
-  const y=parseInt(document.getElementById('jumpYear').value);
-  const m=parseInt(document.getElementById('jumpMonth').value);
-  render(y,m);
-});
 
 // 初期表示
 const _now=new Date();
