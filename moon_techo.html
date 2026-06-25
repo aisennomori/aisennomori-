@@ -326,14 +326,10 @@
 
 
   /* 確定版月のピンク背景（✦マーク月） */
-  .confirmed-month .group-block,
-  .confirmed-month .group-section {
-    background: #FFF0F3;
-  }
-  .confirmed-month .day-cell,
-  .confirmed-month .day-card {
-    background: #FFF0F3;
-  }
+  .confirmed-month .group-block { background:#FFF0F3; }
+  .confirmed-month .group-section { background:#FFF0F3; }
+  .confirmed-month .day-cell { background:#FFF0F3; }
+  .confirmed-month .day-card { background:#FFF0F3; }
   @media print{
     body{ background:#fff; }
     header.app-header,.controls,.view-toggle,.cycle-nav .nav-btn,
@@ -476,13 +472,20 @@
 
   // ── 確定版テーブル ──────────────────────────────────────────
   // ※ 毎年先生から届いたら追加する（それだけでOK）
+  // キー = 仮版HiloのYYYY-MM
+  // 値   = { hilo:確定Hilo, muku:第30夜(次の確定Muku), hasMauli:bool }
   const CONFIRMED = {
-    '2026-07': { hilo:'2026-07-14', muku:'2026-08-12', hasMauli:false },
-    '2026-08': { hilo:'2026-08-13', muku:'2026-09-11', hasMauli:true  },
-    '2026-09': { hilo:'2026-09-12', muku:'2026-10-10', hasMauli:false },
-    '2026-10': { hilo:'2026-10-11', muku:'2026-11-09', hasMauli:true  },
-    '2026-11': { hilo:'2026-11-10', muku:'2026-12-09', hasMauli:true  },
-    '2026-12': { hilo:'2026-12-10', muku:'2027-01-08', hasMauli:true  },
+    // 2026年 全サイクル確定版
+    '2026-03': { hilo:'2026-03-20', muku:'2026-04-17', hasMauli:false },  // Mauli削除
+    '2026-04': { hilo:'2026-04-18', muku:'2026-05-16', hasMauli:false },  // Mauli削除
+    '2026-05': { hilo:'2026-05-17', muku:'2026-06-15', hasMauli:true  },  // Mauli追加 Mauli=6/14
+    '2026-06': { hilo:'2026-06-16', muku:'2026-07-14', hasMauli:false },  // Mauli削除
+    '2026-07': { hilo:'2026-07-14', muku:'2026-08-12', hasMauli:false },  // Mauli削除
+    '2026-08': { hilo:'2026-08-13', muku:'2026-09-11', hasMauli:true  },  // Mauli追加 Mauli=9/10
+    '2026-09': { hilo:'2026-09-12', muku:'2026-10-10', hasMauli:false },  // Mauli削除
+    '2026-10': { hilo:'2026-10-11', muku:'2026-11-09', hasMauli:true  },  // Mauli追加 Mauli=11/8
+    '2026-11': { hilo:'2026-11-10', muku:'2026-12-09', hasMauli:true  },  // Mauli追加 Mauli=12/8
+    '2026-12': { hilo:'2026-12-10', muku:'2027-01-08', hasMauli:true  },  // Mauli追加 Mauli=1/7
   };
 
   // ── 天文計算（Meeus）────────────────────────────────────────
@@ -734,16 +737,18 @@ function fmtDate(ms){const d=new Date(ms);return d.getUTCFullYear()+'年'+(d.get
   function renderCycle(cycle){
     displayedCycle=cycle;
     const{hiloMs,mukuMs,hasMauli}=cycle;
-    document.getElementById('calTitle').textContent=fmtDate(hiloMs)+'〜'+fmtDate(mukuMs)+(cycle.isConfirmed?' ✦':'');
-    // 確定月はシートに薄いピンク背景を追加
-    const sheet=document.getElementById('sheetInner');
-    if(cycle.isConfirmed) sheet.classList.add('confirmed-month');
-    else sheet.classList.remove('confirmed-month');
-    const dayMap=buildDayMap(cycle);
+    // タイトル（確定版は✦マーク）
+    document.getElementById('calTitle').textContent=
+      fmtDate(hiloMs)+'〜'+fmtDate(mukuMs)+(cycle.isConfirmed?' ✦':'');
+    // 描画
     const inner=document.getElementById('sheetInner');
     const pb=document.getElementById('periodBand');
+    const dayMap=buildDayMap(cycle);
     inner.innerHTML='';
     inner.appendChild(pb);
+    // 確定月はピンク背景
+    if(cycle.isConfirmed) inner.classList.add('confirmed-month');
+    else inner.classList.remove('confirmed-month');
     if(currentMode==='grid') renderGrid(inner,dayMap);
     else renderCard(inner,dayMap);
   }
