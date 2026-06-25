@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マウリ調整ツール | 愛泉の杜</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+:root{
+  --bg:#FBF6EC;--card:#FFF;--ink:#3A322A;--soft:#9A8F80;
+  --line:#EAE1D2;--accent:#4F9D94;--warn:#E2A23C;--del:#C25450;
+  --fd:'Shippori Mincho','Yu Mincho',serif;
+  --fb:'Zen Kaku Gothic New','Yu Gothic',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);padding-bottom:60px;}
+
+.hdr{background:linear-gradient(180deg,#3E3A33,#4A4339);color:#F7F1E4;
+  padding:18px 16px 22px;border-radius:0 0 20px 20px;margin-bottom:16px;}
+.hdr h1{font-family:var(--fd);font-size:1.15rem;font-weight:700;letter-spacing:.04em;}
+.hdr .sub{font-size:.72rem;color:#CFC4AE;margin-top:3px;}
+
+.section{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  margin:0 12px 14px;padding:14px 16px;}
+.sec-title{font-family:var(--fd);font-weight:700;font-size:.9rem;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;}
+.badge{font-size:.65rem;background:var(--accent);color:#fff;padding:2px 8px;border-radius:10px;}
+
+/* ① 年選択 */
+.year-row{display:flex;align-items:center;gap:10px;}
+select{font-family:var(--fb);font-size:.95rem;border:1px solid var(--line);
+  border-radius:8px;padding:7px 10px;background:#FCFAF5;color:var(--ink);}
+.btn-load{background:var(--ink);color:#FBF6EC;border:none;border-radius:8px;
+  padding:9px 18px;font-family:var(--fd);font-weight:700;font-size:.85rem;cursor:pointer;}
+.btn-load:active{opacity:.85;}
+
+/* ② 表 */
+.tbl-wrap{overflow-x:auto;margin-top:4px;}
+table{width:100%;border-collapse:collapse;font-size:.78rem;}
+thead th{background:#F0ECE4;color:var(--soft);font-weight:700;padding:7px 6px;
+  text-align:center;border-bottom:2px solid var(--line);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--line);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#FDFAF4;}
+td{padding:7px 6px;text-align:center;vertical-align:middle;}
+td.month{font-family:var(--fd);font-weight:700;color:var(--ink);}
+td.kari{color:var(--soft);}
+td.conf-cell input[type=date]{
+  font-family:var(--fb);font-size:.75rem;border:1px solid var(--line);
+  border-radius:5px;padding:3px 5px;width:108px;background:#fff;}
+td.mauli-cell .rg{display:flex;gap:8px;justify-content:center;}
+td.mauli-cell label{display:flex;align-items:center;gap:3px;cursor:pointer;font-size:.78rem;}
+td.status-cell{font-weight:700;font-size:.8rem;}
+td.status-cell.add{color:var(--accent);}
+td.status-cell.remove{color:var(--del);}
+td.status-cell.same{color:var(--warn);}
+.btn-confirm{background:var(--accent);color:#fff;border:none;border-radius:6px;
+  padding:5px 10px;font-size:.75rem;font-family:var(--fd);font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-confirm:active{opacity:.85;}
+.btn-clear{background:#fff;color:var(--soft);border:1px solid var(--line);border-radius:6px;
+  padding:5px 8px;font-size:.72rem;cursor:pointer;margin-left:4px;}
+
+/* ③ 出力 */
+.output-box{background:#1E1A16;border-radius:10px;padding:14px 16px;
+  font-family:monospace;font-size:.72rem;color:#C8E6C9;white-space:pre;
+  overflow-x:auto;margin-top:8px;line-height:1.6;}
+.btn-copy{width:100%;background:var(--ink);color:#FBF6EC;border:none;border-radius:8px;
+  padding:12px;font-family:var(--fd);font-weight:700;font-size:.9rem;cursor:pointer;margin-top:8px;}
+.btn-copy:active{opacity:.85;}
+.copy-ok{text-align:center;color:var(--accent);font-size:.8rem;margin-top:5px;height:20px;}
+
+/* アプリ反映 */
+.app-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.app-item{border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+.app-item .an{font-weight:700;font-size:.8rem;margin-bottom:6px;}
+.app-item .adl{display:block;width:100%;background:var(--accent);color:#fff;border:none;
+  border-radius:6px;padding:7px;font-size:.75rem;font-family:var(--fd);font-weight:700;
+  cursor:pointer;text-align:center;text-decoration:none;}
+.app-item .adl:active{opacity:.85;}
+.step-hint{font-size:.72rem;color:var(--soft);margin-top:10px;line-height:1.7;
+  background:#F8F4EE;border-radius:8px;padding:10px 12px;}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <h1>🌙 マウリ調整ツール</h1>
+  <p class="sub">愛泉の杜 ─ CONFIRMEDテーブル生成 &amp; アプリ反映</p>
+</header>
+
+<!-- ① 年選択 -->
+<div class="section">
+  <div class="sec-title">① 年を選択</div>
+  <div class="year-row">
+    <select id="yearSel"></select>
+    <button class="btn-load" onclick="loadYear()">読み込む</button>
+  </div>
+</div>
+
+<!-- ② 表形式入力 -->
+<div class="section">
+  <div class="sec-title">② 各月の調整 <span class="badge">確定ボタンで登録</span></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>月</th>
+          <th>仮Hilo</th>
+          <th>仮Muku</th>
+          <th>仮Mauli</th>
+          <th>確定Hilo</th>
+          <th>確定Muku</th>
+          <th>Mauli</th>
+          <th>状態</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ③ CONFIRMEDコード -->
+<div class="section">
+  <div class="sec-title">③ CONFIRMEDコード生成</div>
+  <div class="output-box" id="outputBox">// ② で確定すると自動生成されます</div>
+  <button class="btn-copy" onclick="copyCode()">📋 コピー</button>
+  <div class="copy-ok" id="copyOk"></div>
+</div>
+
+<!-- ④ アプリ反映 -->
+<div class="section">
+  <div class="sec-title">④ アプリへ反映</div>
+  <div class="step-hint">
+    ③でコードをコピー後、各アプリファイルの<br>
+    <code>const CONFIRMED = { ... };</code><br>
+    の部分を貼り替えてGitHubにPushしてください。
+  </div>
+  <div class="app-list" id="appList"></div>
+</div>
+
+<script>
+// ── 天文計算コア ──────────────────────────────────────────────
+const D=86400000;
+function newMoonJDE(k){
+  const T=k/1236.85,T2=T*T,T3=T2*T,T4=T3*T;
+  const r=Math.PI/180,E=1-0.002516*T-0.0000074*T2;
+  const Mm=((201.5643+385.81693528*k+0.0107582*T2+0.00001238*T3-0.000000058*T4)%360)*r;
+  const Ms=((2.5534+29.10535670*k-0.0000014*T2-0.00000011*T3)%360)*r;
+  const Fm=((160.7108+390.67050284*k-0.0016118*T2-0.00000227*T3)%360)*r;
+  const Og=((124.7746-1.56375588*k+0.0020672*T2+0.00000215*T3)%360)*r;
+  const s=Math.sin,E2=E*E;
+  return 2451550.09766+29.530588861*k+0.00015437*T2-0.000000150*T3+0.00000000073*T4
+    -0.40720*s(Mm)+0.17241*E*s(Ms)+0.01608*s(2*Mm)+0.01039*s(2*Fm)
+    +0.00739*E*s(Mm-Ms)-0.00514*E*s(Mm+Ms)+0.00208*E2*s(2*Ms)
+    -0.00111*s(Mm-2*Fm)-0.00057*s(Mm+2*Fm)+0.00056*E*s(2*Mm+Ms)
+    -0.00042*s(3*Mm)+0.00042*E*s(Ms+2*Fm)+0.00038*E*s(Ms-2*Fm)
+    -0.00024*E*s(2*Mm-Ms)-0.00017*s(Og)-0.00007*s(Mm+2*Ms)
+    +0.00004*s(2*Mm-2*Fm)+0.00004*s(3*Ms)+0.00003*s(Mm+Ms-2*Fm)
+    +0.00003*s(2*Mm+2*Fm)-0.00003*s(Mm+Ms+2*Fm)+0.00003*s(Mm-Ms+2*Fm)
+    -0.00002*s(Mm-Ms-2*Fm)-0.00002*s(3*Mm+Ms)+0.00002*s(4*Mm);
+}
+function kFor(y,m){return Math.floor((y+(m-0.5)/12-2000)*12.3685);}
+const nmCache={};
+function getNM(y){
+  if(nmCache[y])return nmCache[y];
+  const seen=new Set(),list=[];
+  for(let k=kFor(y,1)-4;k<=kFor(y,12)+4;k++){
+    const jst=new Date((newMoonJDE(k)-2440587.5)*D+9*3600*1000);
+    const ms=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate());
+    if(!seen.has(ms)){seen.add(ms);list.push(ms);}
+  }
+  return nmCache[y]=list.sort((a,b)=>a-b);
+}
+function nmNear(y){
+  const m=getNM(y-1).concat(getNM(y),getNM(y+1));
+  const s=new Set();
+  return m.filter(ms=>s.has(ms)?false:s.add(ms)).sort((a,b)=>a-b);
+}
+function getKariCycles(y){
+  const list=nmNear(y),res=[];
+  for(let i=1;i<list.length;i++){
+    const hiloMs=list[i-1]+D;
+    const hd=new Date(hiloMs);
+    if(hd.getUTCFullYear()!==y)continue;
+    const hasMauli=Math.round((list[i]-list[i-1])/D)===30;
+    const key=y+'-'+String(hd.getUTCMonth()+1).padStart(2,'0');
+    res.push({key,hiloMs,mukuMs:list[i],hasMauli});
+  }
+  return res;
+}
+
+// ── ユーティリティ ────────────────────────────────────────────
+function fmtYMD(ms){
+  const d=new Date(ms);
+  return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+}
+function fmtMD(ms){
+  const d=new Date(ms);return(d.getUTCMonth()+1)+'/'+d.getUTCDate();
+}
+function msFromStr(s){return new Date(s+'T00:00:00Z').getTime();}
+
+// ── 状態 ──────────────────────────────────────────────────────
+let year=2026;
+let kariCycles=[];
+let confirmed={};  // key → {hilo, muku, hasMauli}
+
+// ── 既存の2026年データをプリロード ───────────────────────────
+const PRELOADED={
+  '2026-03':{hilo:'2026-03-20',muku:'2026-04-17',hasMauli:false},
+  '2026-04':{hilo:'2026-04-18',muku:'2026-05-16',hasMauli:false},
+  '2026-05':{hilo:'2026-05-17',muku:'2026-06-15',hasMauli:true},
+  '2026-06':{hilo:'2026-06-16',muku:'2026-07-14',hasMauli:false},
+  '2026-07':{hilo:'2026-07-14',muku:'2026-08-12',hasMauli:false},
+  '2026-08':{hilo:'2026-08-13',muku:'2026-09-11',hasMauli:true},
+  '2026-09':{hilo:'2026-09-12',muku:'2026-10-10',hasMauli:false},
+  '2026-10':{hilo:'2026-10-11',muku:'2026-11-09',hasMauli:true},
+  '2026-11':{hilo:'2026-11-10',muku:'2026-12-09',hasMauli:true},
+  '2026-12':{hilo:'2026-12-10',muku:'2027-01-08',hasMauli:true},
+};
+
+// ── 初期化 ────────────────────────────────────────────────────
+(function init(){
+  const sel=document.getElementById('yearSel');
+  const cur=new Date().getFullYear();
+  for(let y=cur+3;y>=cur-3;y--){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y+'年';
+    if(y===year)o.selected=true;
+    sel.appendChild(o);
+  }
+  loadYear();
+})();
+
+function loadYear(){
+  year=parseInt(document.getElementById('yearSel').value);
+  kariCycles=getKariCycles(year);
+  // プリロードデータがあれば反映
+  confirmed={};
+  for(const [k,v] of Object.entries(PRELOADED)){
+    if(k.startsWith(year+'-')) confirmed[k]=v;
+  }
+  renderTable();
+  renderOutput();
+}
+
+// ── 表描画 ───────────────────────────────────────────────────
+function renderTable(){
+  const tbody=document.getElementById('tblBody');
+  tbody.innerHTML='';
+  kariCycles.forEach((cy,idx)=>{
+    const mn=parseInt(cy.key.split('-')[1]);
+    const ov=confirmed[cy.key];
+    const kariMauliMs=cy.hasMauli?cy.mukuMs-D:null;
+
+    // 状態計算
+    let stClass='',stLabel='─';
+    if(ov){
+      if(ov.hasMauli&&!cy.hasMauli){stClass='add';stLabel='🟢 追加';}
+      else if(!ov.hasMauli&&cy.hasMauli){stClass='remove';stLabel='🔴 削除';}
+      else{stClass='same';stLabel='✦ 確定';}
+    }
+
+    // 確定値のデフォルト（ov or 仮版）
+    const defH=ov?ov.hilo:fmtYMD(cy.hiloMs);
+    const defM=ov?ov.muku:fmtYMD(cy.mukuMs);
+    const defHM=ov?ov.hasMauli:cy.hasMauli;
+
+    const rid='r'+idx;
+    const tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td class="month">'+mn+'月</td>'+
+      '<td class="kari">'+fmtMD(cy.hiloMs)+'</td>'+
+      '<td class="kari">'+fmtMD(cy.mukuMs)+'</td>'+
+      '<td class="kari">'+(kariMauliMs?fmtMD(kariMauliMs):'なし')+'</td>'+
+      '<td class="conf-cell"><input type="date" id="h'+rid+'" value="'+defH+'"></td>'+
+      '<td class="conf-cell"><input type="date" id="m'+rid+'" value="'+defM+'"></td>'+
+      '<td class="mauli-cell">'+
+        '<div class="rg">'+
+          '<label><input type="radio" name="ml'+rid+'" value="true"'+(defHM?' checked':'')+'> あり</label>'+
+          '<label><input type="radio" name="ml'+rid+'" value="false"'+(!defHM?' checked':'')+'> なし</label>'+
+        '</div>'+
+      '</td>'+
+      '<td class="status-cell '+stClass+'">'+stLabel+'</td>'+
+      '<td>'+
+        '<button class="btn-confirm" onclick="confirmRow(\''+cy.key+'\',\''+rid+'\')">確定</button>'+
+        (ov?'<button class="btn-clear" onclick="clearRow(\''+cy.key+'\')">解除</button>':'')+
+      '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function confirmRow(key,rid){
+  const h=document.getElementById('h'+rid).value;
+  const m=document.getElementById('m'+rid).value;
+  const hm=document.querySelector('input[name="ml'+rid+'"]:checked').value==='true';
+  if(!h||!m){alert('日付を入力してください');return;}
+  confirmed[key]={hilo:h,muku:m,hasMauli:hm};
+  renderTable();
+  renderOutput();
+  // スムーズスクロール
+  document.getElementById('outputBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function clearRow(key){
+  delete confirmed[key];
+  renderTable();
+  renderOutput();
+}
+
+// ── コード生成 ────────────────────────────────────────────────
+function renderOutput(){
+  const keys=Object.keys(confirmed).sort();
+  if(keys.length===0){
+    document.getElementById('outputBox').textContent='// ② で確定すると自動生成されます';
+    return;
+  }
+  const lines=keys.map(k=>{
+    const v=confirmed[k];
+    const mauliMs=v.hasMauli?msFromStr(v.muku)-D:null;
+    const comment=v.hasMauli?'Mauli追加 Mauli='+fmtMD(mauliMs):'Mauli削除';
+    return `  '${k}': { hilo:'${v.hilo}', muku:'${v.muku}', hasMauli:${v.hasMauli} },  // ${comment}`;
+  });
+  document.getElementById('outputBox').textContent=
+    'const CONFIRMED = {\n'+lines.join('\n')+'\n};';
+  renderAppList();
+}
+
+function copyCode(){
+  const text=document.getElementById('outputBox').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const el=document.getElementById('copyOk');
+    el.textContent='✅ コピーしました';
+    setTimeout(()=>el.textContent='',2500);
+  });
+}
+
+// ── アプリ一覧（GitHub URL）────────────────────────────────────
+const APPS=[
+  {name:'moon_techo',    label:'🌙 ムーン手帖'},
+  {name:'moon_cycle',    label:'🔄 ムーンサイクル'},
+  {name:'moon_calendar', label:'📅 カレンダー'},
+  {name:'moon_reading',  label:'📖 リーディング'},
+  {name:'moon_practice', label:'✏️ プラクティス'},
+  {name:'birthday_moon_lookup', label:'🎂 バースデー'},
+];
+const GITHUB_BASE='https://github.com/aisennomori/aisennomori-/blob/main/';
+
+function renderAppList(){
+  const el=document.getElementById('appList');
+  el.innerHTML=APPS.map(a=>
+    '<div class="app-item">'+
+    '<div class="an">'+a.label+'</div>'+
+    '<a class="adl" href="'+GITHUB_BASE+a.name+'.html" target="_blank">GitHub で開く →</a>'+
+    '</div>'
+  ).join('');
+}
+</script>
+</body>
+</html>
