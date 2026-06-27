@@ -289,7 +289,7 @@ const D = 86400000;
     const list=nmNear(y);
     for(let i=1; i<list.length; i++){
       const hiloKari=list[i-1]+D;  // 仮版Hilo
-      if(hiloKari<monthStart||hiloKari>=monthEnd) continue;
+      if(hiloKari>=monthEnd||list[i]<=monthStart) continue;  // ①範囲判定修正
 
       // 仮版HiloのYYYY-MMで確定版を検索 → あれば上書き
       const hd=new Date(hiloKari);
@@ -298,23 +298,43 @@ const D = 86400000;
       if(ov) return {
         hiloMs: new Date(ov.hilo+'T00:00:00Z').getTime(),
         mukuMs: new Date(ov.muku+'T00:00:00Z').getTime(),
+        kariHiloMs: hiloKari,  // ②仮版Hiloを保持（adjCycle用）
         hasMauli: ov.hasMauli,
         isConfirmed: true,
       };
 
       // 仮版
       const hasMauli=Math.round((list[i]-list[i-1])/D)===30;
-      return { hiloMs:hiloKari, mukuMs:list[i], hasMauli, isConfirmed:false };
+      return { hiloMs:hiloKari, mukuMs:list[i], kariHiloMs:hiloKari, hasMauli, isConfirmed:false };
     }
     return null;
   }
 
   // ── ±1月移動 ─────────────────────────────────────────────────
   function adjCycle(cycle,dir){
-    const d=new Date(cycle.hiloMs);
-    let y=d.getUTCFullYear(), m=d.getUTCMonth()+1+dir;
-    if(m>12){m=1;y++;}else if(m<1){m=12;y--;}
-    return findCycle(y,m);
+    // ③kariHiloMsで新月リストを検索（CONFIRMEDずれ対策）
+    const y=new Date(cycle.kariHiloMs).getUTCFullYear();
+    const list=nmNear(y);
+    const kariMuku=cycle.kariHiloMs-D;  // 仮版新月
+    for(let i=1; i<list.length-1; i++){
+      if(list[i-1]!==kariMuku) continue;
+      const ni=dir>0?i:i-2;
+      if(ni<0||ni+1>=list.length) return null;
+      const hiloKari=list[ni]+D;
+      const hd=new Date(hiloKari);
+      const key=hd.getUTCFullYear()+'-'+String(hd.getUTCMonth()+1).padStart(2,'0');
+      const ov=CONFIRMED[key];
+      if(ov) return {
+        hiloMs: new Date(ov.hilo+'T00:00:00Z').getTime(),
+        mukuMs: new Date(ov.muku+'T00:00:00Z').getTime(),
+        kariHiloMs: hiloKari,
+        hasMauli: ov.hasMauli,
+        isConfirmed: true,
+      };
+      const hasMauli=Math.round((list[ni+1]-list[ni])/D)===30;
+      return { hiloMs:hiloKari, mukuMs:list[ni+1], kariHiloMs:hiloKari, hasMauli, isConfirmed:false };
+    }
+    return null;
   }
 
   // ── 指定日の夜番号（1〜30）───────────────────────────────────
