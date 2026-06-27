@@ -96,18 +96,6 @@
   }
 
   /* スピード */
-  .speed-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: .78rem;
-    color: var(--text-dim);
-  }
-  .speed-row input[type=range] {
-    width: 140px;
-    accent-color: var(--teal);
-  }
-  #speedVal { color: var(--teal); font-weight: 700; min-width: 32px; }
 
   /* ボタン */
   .btn-play {
@@ -124,7 +112,8 @@
   .btn-play:hover { background: rgba(201,168,76,0.22); box-shadow: 0 0 40px rgba(201,168,76,0.4); }
   .btn-play:active { transform: scale(.94); }
 
-  .btn-row { display: flex; gap: 14px; }
+  .btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  #btnRepeat.on { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
   .btn-sm {
     padding: 9px 20px; border-radius: 20px;
     border: 1px solid rgba(74,184,200,0.4);
@@ -279,22 +268,11 @@ function checkPw(){
 
   <!-- コントロール -->
   <div class="controls" style="margin-top:20px;">
-    <div class="speed-row" style="display:none;">
-      🐢 <input type="range" id="speed" min="0.5" max="1.2" step="0.05" value="0.72">
-      <span id="speedVal">0.72×</span> 🐇
-    </div>
-
-    <!-- モード切替 -->
-    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
-      <button id="modeRec" class="btn-sm active" onclick="setMode('rec')" style="min-width:90px;">🎵 録音音声</button>
-      <button id="modeSyn" class="btn-sm" onclick="setMode('syn')" style="min-width:90px;">🔊 合成音声</button>
-    </div>
 
     <button class="btn-play" id="btnPlay" onclick="togglePlay()">▶</button>
 
     <div class="btn-row">
-      <button class="btn-sm" onclick="restart()">↺ はじめから</button>
-      <button class="btn-sm" onclick="stopAll()">■ 停止</button>
+      <button class="btn-sm" id="btnRepeat" onclick="toggleRepeat()">🔁 リピート</button>
     </div>
 
     <div class="status" id="status">タップして読み上げ開始</div>
@@ -318,38 +296,24 @@ resize();initStars();draw();
 window.addEventListener('resize',()=>{resize();initStars();});
 
 // ── 詩データ ─────────────────────────────────────────────────
-const LINES = [
-  'E ke Akua',
-  'Ke kumu o ke aloha pau ole',
-  'Mahalo nui loa no keia la.',
-  'Ke noi aku nei makou',
-  'I kou pomaikäi',
-  'E ho mai i ke ola,',
-  'E ho mai i ka Ike,',
-  'E ho mai i ka mana',
-  'No makou a pau.',
-  'No ma mau ma noa.',
-];
 
 // ── 状態 ─────────────────────────────────────────────────────
 let currentLine = -1;
 let playing = false;
-let utterances = [];
-let playMode = 'rec'; // 'rec'=録音音声 / 'syn'=合成音声
+let repeatMode = false;
+
+function toggleRepeat() {
+  repeatMode = !repeatMode;
+  const btn = document.getElementById('btnRepeat');
+  btn.classList.toggle('on', repeatMode);
+  btn.textContent = repeatMode ? '🔁 ON' : '🔁 リピート';
+}
 
 // ── タイムスタンプ（秒）────────────────────────────────────────
 // 録音音声の各行の開始タイミング（実際の音声に合わせて調整可能）
 const TIMESTAMPS = [0.2, 0.2, 5.0, 5.0, 5.0, 12.0, 12.0, 12.0, 18.0, 18.0];
 
 // ── モード切替 ────────────────────────────────────────────
-function setMode(mode) {
-  playMode = mode;
-  stopAll();
-  document.getElementById('modeRec').classList.toggle('active', mode==='rec');
-  document.getElementById('modeSyn').classList.toggle('active', mode==='syn');
-  document.getElementById('speed').parentElement.style.display = mode==='syn' ? 'flex' : 'none';
-}
-
 // ── 録音音声再生 ──────────────────────────────────────────
 let timerInterval = null;
 
@@ -414,10 +378,28 @@ function startTimer() {
     // 終了チェック
     if (audio.ended || (audio.duration > 0 && t >= audio.duration - 0.1)) {
       clearInterval(timerInterval); timerInterval = null;
-      playing = false;
-      document.getElementById('btnPlay').textContent = '▶';
-      document.getElementById('status').textContent = '✦ Mahalo ✦';
-      setTimeout(clearHighlight, 2000);
+      if (repeatMode) {
+        // playing=trueのまま維持してリピート
+        currentLine = -1;
+        audio.currentTime = 0;
+        const p = audio.play();
+        if (p !== undefined) {
+          p.then(() => {
+            document.getElementById('status').textContent = '再生中...';
+            startTimer();
+          }).catch(e => {
+            playing = false;
+            document.getElementById('btnPlay').textContent = '▶';
+          });
+        } else {
+          startTimer();
+        }
+      } else {
+        playing = false;
+        document.getElementById('btnPlay').textContent = '▶';
+        document.getElementById('status').textContent = '✦ Mahalo ✦';
+        setTimeout(clearHighlight, 2000);
+      }
     }
   }, 100);
 }
@@ -464,89 +446,26 @@ function clearHighlight() {
   });
 }
 
-// ── 読み上げ ─────────────────────────────────────────────────
-function getRate() {
-  return parseFloat(document.getElementById('speed').value);
-}
-
-function speakLine(i) {
-  if (!playing || i >= LINES.length) {
-    if (i >= LINES.length) {
-      // 完了
-      playing = false;
-      document.getElementById('btnPlay').textContent = '▶';
-      document.getElementById('status').textContent = '✦ Mahalo ✦';
-      setTimeout(clearHighlight, 2000);
-    }
-    return;
-  }
-  highlight(i);
-  // スクロール
-  const el = document.querySelectorAll('.poem .line')[i];
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-  const utter = new SpeechSynthesisUtterance(LINES[i]);
-  utter.rate = getRate();
-  utter.pitch = 1.0;
-  utter.lang = 'en-US'; // ハワイ語はen-USが最も近い発音
-
-  // ハワイ語っぽく: 少しゆっくり・なめらか
-  utter.volume = 1;
-
-  utter.onend = () => {
-    // 行間ポーズ
-    setTimeout(() => speakLine(i + 1), 400);
-  };
-  utter.onerror = (e) => {
-    console.warn('speech error', e);
-    setTimeout(() => speakLine(i + 1), 200);
-  };
-
-  if (playMode !== 'rec') window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
-  document.getElementById('status').textContent = (i + 1) + ' / ' + LINES.length;
-}
-
 function togglePlay() {
   if (playing) {
     stopAll();
   } else {
     playing = true;
     document.getElementById('btnPlay').textContent = '⏸';
-    if (playMode === 'rec') {
-      startRecAudio();
-    } else {
-      document.getElementById('status').textContent = '読み上げ中...';
-      const start = (currentLine < 0 || currentLine >= LINES.length - 1) ? 0 : currentLine;
-      speakLine(start);
-    }
+    startRecAudio();
   }
 }
 
 function stopAll() {
   playing = false;
   stopRecAudio();
-  if (playMode === 'syn') {
-    try { window.speechSynthesis.cancel(); } catch(e) {}
-  }
   document.getElementById('btnPlay').textContent = '▶';
   document.getElementById('status').textContent = '停止中';
 }
 
-function restart() {
-  stopAll();
-  clearHighlight();
-  currentLine = -1;
-  document.getElementById('status').textContent = 'タップして読み上げ開始';
-}
-
 // スピード表示
-document.getElementById('speed').addEventListener('input', function() {
-  document.getElementById('speedVal').textContent = parseFloat(this.value).toFixed(2) + '×';
-});
 
 // ページ離脱時に停止
-window.addEventListener('beforeunload', () => window.speechSynthesis.cancel());
 // iOS対策: バックグラウンドで止まる場合がある
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && playing) stopAll();
