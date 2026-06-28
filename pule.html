@@ -114,6 +114,7 @@
 
   .btn-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   #btnRepeat.on { background: var(--gold); color: var(--bg); border-color: var(--gold); font-weight: 700; }
+  #btnSpeed.on  { background: var(--teal,#4ab8c8); color: #fff; border-color: var(--teal,#4ab8c8); font-weight: 700; }
   .btn-sm {
     padding: 9px 20px; border-radius: 20px;
     border: 1px solid rgba(74,184,200,0.4);
@@ -273,6 +274,7 @@ function checkPw(){
 
     <div class="btn-row">
       <button class="btn-sm" id="btnRepeat" onclick="toggleRepeat()">🔁 リピート</button>
+      <button class="btn-sm" id="btnSpeed"  onclick="toggleSpeed()">🐢 通常速</button>
     </div>
 
     <div class="status" id="status">タップして読み上げ開始</div>
@@ -311,7 +313,29 @@ function toggleRepeat() {
 
 // ── タイムスタンプ（秒）────────────────────────────────────────
 // 録音音声の各行の開始タイミング（実際の音声に合わせて調整可能）
-const TIMESTAMPS = [0.2, 0.2, 5.0, 5.0, 5.0, 12.0, 12.0, 12.0, 18.0, 18.0];
+// 通常速(1.0x)のタイムスタンプ
+const TIMESTAMPS_1X   = [0.2, 0.2, 5.0, 5.0, 5.0, 12.0, 12.0, 12.0, 18.0, 18.0];
+// 0.85倍速(ゆっくり)のタイムスタンプ
+const TIMESTAMPS_085X = [0.2, 0.2, 4.5, 4.5, 4.5, 12.0, 12.0, 12.0, 17.5, 17.5];
+
+let speedMode = 1.0;
+
+function getTimestamps() {
+  return speedMode === 0.85 ? TIMESTAMPS_085X : TIMESTAMPS_1X;
+}
+
+function toggleSpeed() {
+  if (playing) stopAll();
+  speedMode = speedMode === 1.0 ? 0.85 : 1.0;
+  const btn = document.getElementById('btnSpeed');
+  if (speedMode === 0.85) {
+    btn.classList.add('on');
+    btn.textContent = '🐢 ゆっくり';
+  } else {
+    btn.classList.remove('on');
+    btn.textContent = '🐢 通常速';
+  }
+}
 
 // ── モード切替 ────────────────────────────────────────────
 // ── 録音音声再生 ──────────────────────────────────────────
@@ -332,6 +356,7 @@ function startRecAudio() {
   // 再生可能になってから play()
   function doPlay() {
     btn.disabled = false;
+    audio.playbackRate = speedMode;  // 速度を適用（load後も再設定）
     const p = audio.play();
     if (p !== undefined) {
       p.then(() => {
@@ -355,6 +380,7 @@ function startRecAudio() {
     document.getElementById('status').textContent = '読み込み中...';
     audio.oncanplaythrough = () => {
       audio.oncanplaythrough = null;
+      audio.playbackRate = speedMode;  // load後に再セット
       doPlay();
     };
     audio.load();
@@ -371,8 +397,9 @@ function startTimer() {
     const t = audio.currentTime;
     // 現在時刻に対応する行を特定
     let cur = -1;
-    for (let i = TIMESTAMPS.length - 1; i >= 0; i--) {
-      if (t >= TIMESTAMPS[i]) { cur = i; break; }
+    const TS = getTimestamps();
+    for (let i = TS.length - 1; i >= 0; i--) {
+      if (t >= TS[i]) { cur = i; break; }
     }
     if (cur >= 0 && cur !== currentLine) highlight(cur);
     // 終了チェック
@@ -382,6 +409,7 @@ function startTimer() {
         // playing=trueのまま維持してリピート
         currentLine = -1;
         audio.currentTime = 0;
+        audio.playbackRate = speedMode;  // リピート時も速度を維持
         const p = audio.play();
         if (p !== undefined) {
           p.then(() => {
@@ -425,15 +453,16 @@ function showTrans(lang) {
 function highlight(i) {
   currentLine = i;
   // 同じタイムスタンプの行をグループとして同時ハイライト
-  const ts = TIMESTAMPS[i];
+  const TS = getTimestamps();
+  const ts = TS[i];
   document.querySelectorAll('.poem .line').forEach((el, idx) => {
-    const same = TIMESTAMPS[idx] === ts;
+    const same = TS[idx] === ts;
     el.classList.toggle('active', same);
-    el.classList.toggle('done', TIMESTAMPS[idx] < ts);
+    el.classList.toggle('done', TS[idx] < ts);
   });
   ['transJa','transEn'].forEach(id => {
     document.querySelectorAll(`#${id} .tline`).forEach((el, idx) => {
-      el.classList.toggle('active', TIMESTAMPS[idx] === ts);
+      el.classList.toggle('active', TS[idx] === ts);
     });
   });
 }
