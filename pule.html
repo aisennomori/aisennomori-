@@ -203,6 +203,19 @@
     document.getElementById('pwInput').focus();
   }
 })();
+// 動画サイズ切替
+function setVideoSize(s, btn) {
+  const v = document.getElementById('bgVideo');
+  const sizes = { s:'25%', m:'50%', l:'75%', xl:'100%' };
+  v.style.width  = sizes[s];
+  v.style.height = sizes[s];
+  document.querySelectorAll('.vsz-btn').forEach(b => b.classList.remove('on'));
+  if (btn) btn.classList.add('on');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  setVideoSize('l');
+});
+
 function checkPw(){
   const v=document.getElementById('pwInput').value;
   if(v==='goh'){
@@ -275,6 +288,14 @@ function checkPw(){
   </div>
 
   <!-- コントロール -->
+  <!-- 動画サイズ選択 -->
+  <div class="video-size-row">
+    <button class="vsz-btn" onclick="setVideoSize('s',this)">1/4</button>
+    <button class="vsz-btn" onclick="setVideoSize('m',this)">1/2</button>
+    <button class="vsz-btn on" onclick="setVideoSize('l',this)">3/4</button>
+    <button class="vsz-btn" onclick="setVideoSize('xl',this)">全体</button>
+  </div>
+
   <div class="controls" style="margin-top:20px;">
 
     <button class="btn-play" id="btnPlay" onclick="togglePlay()">▶</button>
